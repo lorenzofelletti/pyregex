@@ -1,0 +1,13 @@
+REGEX GRAMMAR
+
+RE ::= '^'? OR_RE | '$'
+OR_RE ::= QTIFIED_RE '|'?
+QTIFIED_RE ::= RANGE_EL QTIFIER?
+RANGE_EL ::= EL | '[' INNER_EL ']'
+EL ::= BASE_EL | '(' RE ')'
+BASE_EL ::= '^'? ANY_CH
+ANY_CH ::= '\'? (ch | SPECIAL)
+
+QTIFIER ::= '*' | '+' | '?' | '{' (num, ',')? num '}'
+INNER_EL ::= BASE_EL+ | BASE_EL '-' BASE_EL ('|' INNER_EL)*
+SPECIAL ::= '(' | ')' | '+' | '{' | '[' | '|' | '.' | '^' | '$' | ...
