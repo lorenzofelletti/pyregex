@@ -2,7 +2,7 @@ class Token:
     pass
 
 
-class Element(Token):
+class ElementToken(Token):
     def __init__(self, char):
         super().__init__()
         self.type = 'element'
@@ -101,14 +101,12 @@ class Bracket(Token):
 
 class LeftBracket(Bracket):
     def __init__(self):
-        super().__init__()
-        self.side = 'L'
+        super().__init__(side='L')
 
 
 class RightBracket(Bracket):
-    def __init__(self, side):
-        def __init__(self):
-            super().__init__(side='R')
+    def __init__(self):
+        super().__init__(side='R')
 
 
 class Quantifier(Token):
@@ -147,3 +145,34 @@ class Plus(OneOrMore):
 class QuestionMark(ZeroOrOne):
     def __init__(self):
         super().__init__(qtifier_char='?')
+
+
+class OrToken(Token):
+    def __init__(self, or_ch):
+        super().__init__()
+        self.type = 'or'
+        self.or_ch = or_ch
+
+
+class VerticalBar(OrToken):
+    def __init__(self):
+        super().__init__(or_ch='|')
+
+
+class NotToken(Token):
+    def __init__(self, not_ch):
+        super().__init__()
+        self.type = 'not'
+        self.not_ch = not_ch
+
+
+class Circumflex(NotToken):
+    def __init__(self):
+        super().__init__(not_ch='^')
+
+
+class Dash(Token):
+    def __init__(self):
+        super().__init__()
+        self.type = 'dash'
+        self.ch = '-'
