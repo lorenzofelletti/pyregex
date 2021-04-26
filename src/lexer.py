@@ -22,10 +22,13 @@ class Lexer:
         while i < len(re):
             ch = re[i]
             if escape_found:
-                i += 1
-                append(Element(char=re[i]))
+                if ch == 't':
+                    append(ElementToken(char='\t'))
+                else:
+                    append(ElementToken(char=ch))
             elif ch == '\\':
                 escape_found = True
+                i += 1  # otherwise i won't be incremented bc of continue
                 continue
             elif ch == '.':
                 append(Wildcard())
@@ -35,30 +38,44 @@ class Lexer:
                 append(RightParenthesis())
             elif ch == '[':
                 append(LeftBracket())
+            elif ch == '-':
+                append(Dash())
             elif ch == ']':
                 append(RightBracket())
             elif ch == '{':
                 append(LeftCurlyBrace())
+                i += 1
                 while i < len(re):
                     ch = re[i]
                     if ch == ',':
                         append(Comma())
                     elif self.__is_digit__(ch):
-                        append(Element(char=ch))
+                        append(ElementToken(char=ch))
                     elif ch == '}':
                         append(RightCurlyBrace())
                         break
                     else:
-                        raise Exception('Bad token at index ${:d}.'.format(i))
+                        raise Exception('Bad token at index ${}.'.format(i))
                     i += 1
             elif ch == '^':
-                append(Start())
+                if i == 0:
+                    append(Start())
+                else:
+                    append(Circumflex())
             elif ch == '$':
                 append(End())
+            elif ch == '?':
+                append(QuestionMark())
+            elif ch == '*':
+                append(Asterisk())
+            elif ch == '+':
+                append(Plus())
+            elif ch == '|':
+                append(VerticalBar())
             else:
-                append(Element(char=ch))
+                append(ElementToken(char=ch))
 
             escape_found = False
             i += 1
-        
+
         return tokens
