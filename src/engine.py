@@ -34,6 +34,7 @@ class RegexEngine:
                 # if str_i == len(string) - 1:
                 # i consumed all the input string
                 #    break
+                curr_tkn = ast.children[i]
 
                 # if is OrNode I evaluate the sub-groups with a recursive call
                 if isinstance(curr_tkn, OrNode):
@@ -68,38 +69,40 @@ class RegexEngine:
                         if res == True:
                             # yes! Come on!
                             str_i = new_str_i
-                            i += 1
-                        elif j < min_:
+                        elif min_ <= j:
                             # no match sorry :(
-                            return False, new_str_i
-                        else:
                             break
+                        else:
+                            return False, new_str_i
                         j += 1
+                    i += 1
                     continue
 
                 else:
                     # it is a LeafNode obviously now
                     min_, max_ = curr_tkn.min, curr_tkn.max
+                    match_str = curr_tkn.match if not type(curr_tkn) is WildcardElement else True
                     j = 0
                     while j < max_:
-                        match_str = curr_tkn.match if not type(
-                            curr_tkn) is WildcardElement else True
-                        if str_i < len(string) - 1:  # i still have input to match
+                        if str_i < len(string):  # i still have input to match
                             if type(match_str) is bool:
                                 # i have a wildcard baby
                                 str_i += 1
-                            elif match_str.find(str_i[i+1]) > -1:
+                            elif match_str.find(string[i]) > -1:
                                 str_i += 1
-                            elif:
+                            else:
                                 return False, str_i
                         else:  # finished input
                             # finished input w/o finishing the re tree
                             if min_ <= j:
-                                i += 1
-                                continue
+                                break
                             else:
                                 # i have more states, but the input is finished
                                 return False, str_i
+                        j += 1
+                    i += 1
+                    continue
+                    
 
             return True, str_i
         return match_group(ast=ast, string=string)
