@@ -7,6 +7,7 @@ class RE(ASTNode):
         super().__init__()
         self.type = 're'
         self.child = child
+        self.children = [child]
         self.match_start = False
         self.match_end = False
 
@@ -29,6 +30,7 @@ class WildcardElement(Element):
     def __init__(self):
         super().__init__(match_ch='anything')
         self.type = 'wildcard_element'
+        self.match = True
 
 
 class RangeElement(LeafNode):
@@ -46,13 +48,16 @@ class OrNode(ASTNode):
         self.type = 'orNode'
         self.left = left
         self.right = right
+        self.children = [left, right]
 
 
+# unused
 class NotNode(ASTNode):
     def __init__(self, child):
         super().__init__()
         self.type = 'notNode'
         self.child = child
+        self.children = [child]
 
 
 class GroupNode(ASTNode):
