@@ -82,7 +82,8 @@ class Pyrser:
 
         def parse_re_seq():
             elements = parse_group()
-            while isinstance(next_tkn, OrToken):
+            while isinstance(curr_tkn, OrToken):
+                next_tkn()
                 elements = OrNode(left=elements, right=parse_group())
             return elements
 
@@ -91,6 +92,7 @@ class Pyrser:
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and not isinstance(curr_tkn, RightParenthesis):
                 new_el = parse_range_el()
+
                 next_tkn()
                 if isinstance(curr_tkn, Quantifier):
                     if isinstance(curr_tkn, ZeroOrOne):
@@ -100,6 +102,52 @@ class Pyrser:
                     else:
                         # suppose it's 1+
                         new_el.min, new_el.max = 1, np.inf
+                    next_tkn()
+
+                if isinstance(curr_tkn, LeftCurlyBrace):
+                    next_tkn()
+                    if isinstance(curr_tkn, ElementToken):
+                        val_1 = int(curr_tkn.char)
+
+                        next_tkn()
+                        if isinstance(curr_tkn, Comma):
+                            next_tkn()
+                            if isinstance(curr_tkn, Element):
+                                val_2 = int(curr_tkn.char)
+                                new_el.min, new_el.max = val_1, val_2
+
+                                next_tkn()
+                                if not isinstance(curr_tkn, RightCurlyBrace):
+                                    raise Exception(
+                                        'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
+                            elif isinstance(curr_tkn, RightCurlyBrace):
+                                new_el.min = val_1
+                                new_el.max = np.inf
+                            else:
+                                raise Exception(
+                                    'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
+                        elif isinstance(curr_tkn, RightCurlyBrace):
+                            new_el.min, new_el.max = val_1, val_1
+                        else:
+                            raise Exception(
+                                'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
+
+                    elif isinstance(curr_tkn, Comma):
+                        new_el.min = 0
+                        next_tkn()
+                        if isinstance(curr_tkn, Element):
+                            new_el.max = int(curr_tkn.char)
+                            next_tkn()
+                            if not isinstance(curr_tkn, RightCurlyBrace):
+                                raise Exception(
+                                    'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
+                        else:
+                            raise Exception(
+                                'Invalide curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
+
+                    else:
+                        raise Exception(
+                            'Escape the \'{\'curly brace or use one of the following legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
                     next_tkn()
 
                 elements = np.append(elements, new_el)
