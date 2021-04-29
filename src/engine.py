@@ -2,7 +2,7 @@ import numpy as np
 from .pyrser import Pyrser
 from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement
 
-# no backtracking or equivalent strategy applied yet :(
+
 class RegexEngine:
     def __init__(self):
         self.parser = Pyrser()
@@ -12,6 +12,23 @@ class RegexEngine:
         prev_node = None
         curr_tkn = ast
         str_i = 0  # matched string chars so far
+
+        def backtrack(backtrack_stack: list, str_i):
+            '''
+            Retun a tuple: 
+             - bool: can/can't I backtrack
+             - new_str_i: the new str_i to use
+            '''
+            node, min_, matched_times, consumed_list = backtrack_stack.pop()
+
+            if node is None or matched_times == min_:
+                return False, str_i
+            else:
+                last_consumed = consumed_list.pop()
+                new_str_i = str_i - last_consumed
+                backtrack_stack.append(
+                    (node, min_, matched_times - 1, consumed_list))
+                return True, new_str_i
 
         def match_group(ast: ASTNode, string: str):
             '''
@@ -23,6 +40,7 @@ class RegexEngine:
             number of matched characters in the string so far.
             '''
             nonlocal str_i
+            backtrack_stack = []
             # curr_tkn here is always a group or ornode
             # because recursion occur only w/ OrNode,
             # which
@@ -56,53 +74,120 @@ class RegexEngine:
                             continue
                         else:
                             # no match :(
-                            # new_str_i and not str_i so to inform exactly about where the fail occurred
+                            # return new_str_i and not str_i so to inform exactly about where the fail occurred
                             return False, new_str_i
 
                 elif isinstance(curr_tkn, GroupNode):
                     min_, max_ = curr_tkn.min, curr_tkn.max
                     j = 0
+
+                    bt_node = curr_tkn
+                    bt_min = min_
+                    consumed_list = []
+
+                    before_str_i = str_i
+
+                    backtracking = False
                     while j < max_:
                         # aaaaah the group numerosity! Sh***t!
                         res, new_str_i = match_group(
                             ast=curr_tkn, string=string)
                         if res == True:
                             # yes! Come on!
+                            consumed_list.append(new_str_i - str_i)
                             str_i = new_str_i
                         elif min_ <= j:
-                            # no match sorry :(
+                            # i did the bare minimum or more
                             break
                         else:
-                            return False, new_str_i
+                            # TODO: try to backtrack
+                            can_bt, bt_str_i = backtrack(
+                                backtrack_stack, before_str_i)
+                            if can_bt:
+                                new_str_i = str_i
+                                backtracking = True
+                                break  # retry to match the current node
+                            else:
+                                return False, new_str_i
                         j += 1
-                    i += 1
+
+                    # if NOT backtracking iterate the next element, and put the
+                    # current on the backtrac_stack, otherwise don't increment i, don't put on the
+                    # stack so to retry the current one (just continue)
+                    if not backtracking:
+                        backtrack_stack.append(
+                            (curr_tkn, bt_min, j, consumed_list))
+                        i += 1
+
                     continue
 
                 else:
                     # it is a LeafNode obviously now
                     min_, max_ = curr_tkn.min, curr_tkn.max
-                    match_str = curr_tkn.match if not type(curr_tkn) is WildcardElement else True
+                    match_str = curr_tkn.match if not type(
+                        curr_tkn) is WildcardElement else True
                     j = 0
+
+                    bt_node = curr_tkn
+                    bt_min = min_
+                    consumed_list = []
+
+                    before_str_i = str_i  # to discard changes made in case i need to bt
+
+                    backtracking = False
                     while j < max_:
                         if str_i < len(string):  # i still have input to match
                             if type(match_str) is bool:
-                                # i have a wildcard baby
-                                str_i += 1
+                                # i have a wildcard, that match anything but newline
+                                if "\n".find(string[i]) == -1:
+                                    consumed_list.append(1)
+                                    str_i += 1
+                                elif min_ <= j:
+                                    break
+                                else:
+                                    # TODO: try to backtrack
+                                    can_bt, bt_str_i = backtrack(
+                                        backtrack_stack, before_str_i)
+                                    if can_bt:
+                                        str_i = bt_str_i
+                                        backtracking = True
+                                        break
+                                    else:
+                                        return False, str_i
                             elif match_str.find(string[i]) > -1:
+                                consumed_list.append(1)
                                 str_i += 1
                             else:
-                                return False, str_i
+                                # TODO: try to backtrack
+                                can_bt, bt_str_i = backtrack(
+                                    backtrack_stack, before_str_i)
+                                if can_bt:
+                                    str_i = bt_str_i
+                                    backtracking = True
+                                    break
+                                else:
+                                    return False, str_i
                         else:  # finished input
                             # finished input w/o finishing the re tree
                             if min_ <= j:
                                 break
                             else:
                                 # i have more states, but the input is finished
-                                return False, str_i
+                                # TODO: try to backtrack
+                                can_bt, bt_str_i = backtrack(
+                                    backtrack_stack, before_str_i)
+                                if can_bt:
+                                    str_i = bt_str_i
+                                    backtracking = True
+                                    break
+                                else:
+                                    return False, str_i
                         j += 1
-                    i += 1
+                    if not backtracking:
+                        backtrack_stack.append(
+                            (curr_tkn, bt_min, j, consumed_list))
+                        i += 1
                     continue
-                    
 
             return True, str_i
         return match_group(ast=ast, string=string)
