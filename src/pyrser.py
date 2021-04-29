@@ -96,7 +96,7 @@ class Pyrser:
                     if isinstance(curr_tkn, ZeroOrOne):
                         new_el.min, new_el.max = 0, 1
                     elif isinstance(curr_tkn, ZeroOrMore):
-                        new_el.min, new_el.max = np.inf
+                        new_el.min, new_el.max = 0, np.inf
                     else:
                         # suppose it's 1+
                         new_el.min, new_el.max = 1, np.inf
