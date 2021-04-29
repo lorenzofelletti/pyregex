@@ -19,6 +19,8 @@ class RegexEngine:
              - bool: can/can't I backtrack
              - new_str_i: the new str_i to use
             '''
+            if len(backtrack_stack) == 0:
+                return False, str_i
             node, min_, matched_times, consumed_list = backtrack_stack.pop()
 
             if node is None or matched_times == min_:
@@ -56,7 +58,7 @@ class RegexEngine:
 
                 # if is OrNode I evaluate the sub-groups with a recursive call
                 if isinstance(curr_tkn, OrNode):
-                    res, new_str_i = match_group(ast=ast.left, string=string)
+                    res, new_str_i = match_group(ast=curr_tkn.left, string=string)
 
                     if res == True:
                         # yeah it's true, I'm done w/ this or!!
@@ -66,7 +68,7 @@ class RegexEngine:
                     else:
                         # nooo I must try the other one :(
                         res, new_str_i = match_group(
-                            ast=ast.right, string=string)
+                            ast=curr_tkn.right, string=string)
                         if res == True:
                             # yeah!
                             str_i = new_str_i
@@ -121,7 +123,7 @@ class RegexEngine:
 
                     continue
 
-                else:
+                elif isinstance(curr_tkn, LeafNode):
                     # it is a LeafNode obviously now
                     min_, max_ = curr_tkn.min, curr_tkn.max
                     match_str = curr_tkn.match if not type(
@@ -188,6 +190,8 @@ class RegexEngine:
                             (curr_tkn, bt_min, j, consumed_list))
                         i += 1
                     continue
+                else:
+                    return False, str_i
 
             return True, str_i
         return match_group(ast=ast, string=string)
