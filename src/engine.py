@@ -23,8 +23,14 @@ class RegexEngine:
                 return False, str_i
             node, min_, matched_times, consumed_list = backtrack_stack.pop()
 
-            if node is None or matched_times == min_:
+            if node is None:
                 return False, str_i
+            elif matched_times == min_:
+                if min_ != 0:
+                    return False, str
+                else:
+                    # min for the popped element is 0 so i can try popping another (recursive call)
+                    return backtrack(backtrack_stack, str_i)
             else:
                 last_consumed = consumed_list.pop()
                 new_str_i = str_i - last_consumed
@@ -91,7 +97,6 @@ class RegexEngine:
 
                     backtracking = False
                     while j < max_:
-                        # aaaaah the group numerosity! Sh***t!
                         res, new_str_i = match_group(
                             ast=curr_tkn, string=string)
                         if res == True:
@@ -141,7 +146,7 @@ class RegexEngine:
                         if str_i < len(string):  # i still have input to match
                             if type(match_str) is bool:
                                 # i have a wildcard, that match anything but newline
-                                if "\n".find(string[i]) == -1:
+                                if "\n".find(string[str_i]) == -1:
                                     consumed_list.append(1)
                                     str_i += 1
                                 elif min_ <= j:
@@ -156,7 +161,7 @@ class RegexEngine:
                                         break
                                     else:
                                         return False, str_i
-                            elif match_str.find(string[i]) > -1:
+                            elif match_str.find(string[str_i]) > -1:
                                 consumed_list.append(1)
                                 str_i += 1
                             else:
