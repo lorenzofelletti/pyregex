@@ -15,24 +15,23 @@ def test_simple_regex(parser):
     assert ast.match_start == False
     assert ast.match_end == False
     assert type(ast.child) is GroupNode
-    assert type(ast.child.children[0]) is Element
+    assert type(ast.child.children[1]) is Element
 
 
 def test_grouping(parser):
     ast = parser.parse('a(b)c')
 
     # top level group
-    assert len(ast.child.children) == 3
-    assert type(ast.child.children[0]) is Element
-    assert type(ast.child.children[1]) is GroupNode
-    assert type(ast.child.children[2]) is Element
+    assert len(ast.child.children) == 5
+    assert type(ast.child.children[0+1]) is Element
+    assert type(ast.child.children[1+1]) is GroupNode
+    assert type(ast.child.children[2+1]) is Element
 
     # ast.child.children[1] group '(a)'
-    assert len(ast.child.children[1].children) == 1
-    assert type(ast.child.children[1].children[0]) is Element
+    assert len(ast.child.children[1+1].children) == 1
+    assert type(ast.child.children[1+1].children[0]) is Element
 
 
 def test_curly_braces_1(parser):
     ast = parser.parse('a{5}b')
-    print(ast.child.children)
-    assert len(ast.child.children) == 2
+    assert len(ast.child.children) == 2+2
