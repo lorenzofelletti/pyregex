@@ -64,7 +64,8 @@ class RegexEngine:
 
                 # if is OrNode I evaluate the sub-groups with a recursive call
                 if isinstance(curr_tkn, OrNode):
-                    res, new_str_i = match_group(ast=curr_tkn.left, string=string)
+                    res, new_str_i = match_group(
+                        ast=curr_tkn.left, string=string)
 
                     if res == True:
                         # yeah it's true, I'm done w/ this or!!
