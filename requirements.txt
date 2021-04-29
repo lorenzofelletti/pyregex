@@ -1,0 +1,12 @@
+attrs==20.3.0
+autopep8==1.5.6
+iniconfig==1.1.1
+numpy==1.20.2
+packaging==20.9
+pluggy==0.13.1
+py==1.10.0
+pycodestyle==2.7.0
+pyparsing==2.4.7
+pytest==6.2.3
+rope==0.19.0
+toml==0.10.2
