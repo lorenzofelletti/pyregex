@@ -8,7 +8,7 @@ from .re_ast import *
 class Pyrser:
     """
     Pyrser parse regular expressions and return the correspondent AST.
-    
+
     Legal Regex examples:
     a
     (a)
@@ -89,7 +89,7 @@ class Pyrser:
         def parse_group():
             elements = np.array([])  # holds the children of the GroupNode
 
-            while curr_tkn is not None and not isinstance(curr_tkn, OrToken):
+            while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and not isinstance(curr_tkn, RightParenthesis):
                 new_el = parse_range_el()
                 next_tkn()
                 if isinstance(curr_tkn, Quantifier):
@@ -193,7 +193,13 @@ class Pyrser:
             if isinstance(curr_tkn, Wildcard):
                 return WildcardElement()
             elif isinstance(curr_tkn, LeftParenthesis):
-                return parse_re_seq()
+                next_tkn()
+                res = parse_re_seq()
+                if isinstance(curr_tkn, RightParenthesis):
+                    # next_tkn() not needed (the parse_group while loop will eat the parenthesis)
+                    return res
+                else:
+                    raise Exception('Missing closing group parenthesis \')\'')
 
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)
