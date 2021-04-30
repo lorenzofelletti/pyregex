@@ -60,18 +60,45 @@ class Pyrser:
             return next_tkn
 
         def parse_re():
-            match_start = False
-            match_end = False
-
+            match_start, match_end = True, True
             if isinstance(curr_tkn, StartToken):
-                match_start = True
                 next_tkn()
+            else:
+                match_start = False
 
             node = RE(parse_re_seq())
 
             if isinstance(curr_tkn, EndToken):
-                match_end = True
                 next_tkn()
+            else:
+                match_end = False
+
+            if not match_start:
+                any_at_start = WildcardElement()
+                any_at_start.min, any_at_start.max = 0, np.inf
+                if type(node.child) is GroupNode:
+                    node.child.children = np.insert(
+                        node.child.children, 0, any_at_start)
+                    node.children = [node.child]
+                else:
+                    # is OrNode
+                    new_re_child = GroupNode(
+                        children=np.array([any_at_start, node.child]))
+                    node.child = new_re_child
+                    node.children = [node.child]
+
+            if not match_end:
+                any_at_end = WildcardElement()
+                any_at_end.min, any_at_end.max = 0, np.inf
+                if type(node.child) is GroupNode:
+                    node.child.children = np.append(
+                        node.child.children, any_at_end)
+                    node.children = [node.child]
+                else:
+                    new_re_child = GroupNode(
+                        children=np.array([node.child, any_at_end]))
+                    node.child = new_re_child
+                    node.children = [node.child]
 
             return node
 
@@ -94,6 +121,11 @@ class Pyrser:
                 new_el = parse_range_el()
 
                 next_tkn()
+
+                if isinstance(curr_tkn, EndToken):
+                    elements = np.append(elements, new_el)
+                    break
+
                 if isinstance(curr_tkn, Quantifier):
                     if isinstance(curr_tkn, ZeroOrOne):
                         new_el.min, new_el.max = 0, 1
@@ -238,7 +270,7 @@ class Pyrser:
         def parse_el():
             if isinstance(curr_tkn, ElementToken):
                 return Element(match_ch=curr_tkn.char)
-            if isinstance(curr_tkn, Wildcard):
+            elif isinstance(curr_tkn, Wildcard):
                 return WildcardElement()
             elif isinstance(curr_tkn, LeftParenthesis):
                 next_tkn()
@@ -248,6 +280,8 @@ class Pyrser:
                     return res
                 else:
                     raise Exception('Missing closing group parenthesis \')\'')
+            else:
+                return
 
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)
