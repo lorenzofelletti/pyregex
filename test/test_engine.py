@@ -32,6 +32,11 @@ def test_or(reng):
 
 
 def test_or_no_match(reng):
+    res, consumed = reng.match('^a|b$', 'c')
+    assert res == False
+
+
+def test_or_no_match_with_bt(reng):
     res, consumed = reng.match('a|b', 'c')
     assert res == False
 
@@ -39,3 +44,58 @@ def test_or_no_match(reng):
 def test_bt_no_match(reng):
     res, consumed = reng.match('a{5}a', 'aaaaa')
     assert res == False
+
+
+def test_match_group_zero_or_more(reng):
+    res, consumed = reng.match('(a)*', 'aa')
+    assert (True, 2) == (res, consumed)
+
+
+def test_fail_group_one_or_more(reng):
+    res, cons = reng.match('^(a)+', 'b')
+    assert res == False
+
+
+def test_complex_match(reng):
+    res, cons = reng.match('^(a|b+c)?[n-z]{2}', 'axx')
+    assert res == True
+
+
+def test_complex_match_2(reng):
+    res, cons = reng.match('^(a|b+c)?[n-z]{2}', 'xx')
+    assert res == True
+
+
+def test_match_mail_simple(reng):
+    res, cons = reng.match('.*@.*\.(com|it)', 'vr@gmail.com')
+    assert res == True
+
+
+def test_bt_index_leaf(reng):
+    res, cons = reng.match('^aaaa.*a$', 'aaaaa')
+    assert res == True
+
+
+def test_bt_index_or(reng):
+    res, cons = reng.match('^x(a|b)?bc$', 'xbc')
+    assert res == True
+
+
+def test_bt_index_group(reng):
+    res, cons = reng.match('^x(a)?ac$', 'xac')
+    assert res == True
+
+
+def test_match_or_left(reng):
+    res, cons = reng.match('na|nb', 'na')
+    assert res == True
+
+
+def test_match_or_right(reng):
+    res, cons = reng.match('na|nb', 'nb')
+    assert res == True
+
+
+def test_match_or_right_at_start_end(reng):
+    res, cons = reng.match('^na|nb$', 'nb')
+    assert res == True

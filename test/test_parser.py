@@ -12,8 +12,6 @@ def test_simple_regex(parser):
     ast = parser.parse('a')
     print(ast)
     assert type(ast) is RE
-    assert ast.match_start == False
-    assert ast.match_end == False
     assert type(ast.child) is GroupNode
     assert type(ast.child.children[1]) is Element
 
@@ -35,3 +33,18 @@ def test_grouping(parser):
 def test_curly_braces_1(parser):
     ast = parser.parse('a{5}b')
     assert len(ast.child.children) == 2+2
+
+
+def test_fail_curly(parser):
+    with pytest.raises(Exception):
+        parser.parse('a{3,3}}')
+
+
+def test_fail_no_closing_par(parser):
+    with pytest.raises(Exception):
+        parser.parse('a[d]((vfw)')
+
+
+def test_parse_match_start_end(parser):
+    ast = parser.parse('^aaaa.*a$')
+    assert len(ast.child.children) == 6
