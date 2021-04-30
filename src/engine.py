@@ -64,27 +64,49 @@ class RegexEngine:
 
                 # if is OrNode I evaluate the sub-groups with a recursive call
                 if isinstance(curr_tkn, OrNode):
-                    res, new_str_i = match_group(
-                        ast=curr_tkn.left, string=string)
+                    min_, max_ = curr_tkn.min, curr_tkn.max
+                    bt_node = curr_tkn
+                    bt_min = min_
+                    consumed_list = []
+                    before_str_i = str_i
+                    j = 0
 
-                    if res == True:
-                        # yeah it's true, I'm done w/ this or!!
-                        str_i = new_str_i  # update the consumed characters
-                        i += 1  # iterate the next child
-                        continue
-                    else:
-                        # nooo I must try the other one :(
+                    backtracking = False
+                    while j < max_:
+                        #TODO: il while loop come per gli altri
                         res, new_str_i = match_group(
-                            ast=curr_tkn.right, string=string)
+                            ast=curr_tkn.left, string=string)
+
                         if res == True:
-                            # yeah!
-                            str_i = new_str_i
-                            i += 1
-                            continue
+                            # yeah it's true, I'm done w/ this or!!
+                            consumed_list.append(new_str_i - str_i)
+                            str_i = new_str_i  # update the consumed characters
                         else:
-                            # no match :(
-                            # return new_str_i and not str_i so to inform exactly about where the fail occurred
-                            return False, new_str_i
+                            # nooo I must try the other one :(
+                            res, new_str_i = match_group(
+                                ast=curr_tkn.right, string=string)
+                            if res == True:
+                                # yeah!
+                                consumed_list.append(new_str_i - str_i)
+                                str_i = new_str_i
+                            elif min_ <= j:
+                                break
+                            else:
+                                can_bt, bt_str_i = backtrack(
+                                    backtrack_stack, before_str_i)
+                                if can_bt:
+                                    new_str_i = bt_str_i
+                                    backtracking = True
+                                    break
+                                else:
+                                    return False, new_str_i
+                        j += 1
+
+                    if not backtracking:
+                        backtrack_stack.append((curr_tkn, bt_min, j, consumed_list))
+                        i += 1
+                    
+                    continue
 
                 elif isinstance(curr_tkn, GroupNode):
                     min_, max_ = curr_tkn.min, curr_tkn.max
@@ -112,7 +134,7 @@ class RegexEngine:
                             can_bt, bt_str_i = backtrack(
                                 backtrack_stack, before_str_i)
                             if can_bt:
-                                new_str_i = str_i
+                                new_str_i = bt_str_i
                                 backtracking = True
                                 break  # retry to match the current node
                             else:
