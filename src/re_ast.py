@@ -8,8 +8,6 @@ class RE(ASTNode):
         self.type = 're'
         self.child = child
         self.children = [child]
-        self.match_start = False
-        self.match_end = False
 
 
 class LeafNode(ASTNode):
@@ -49,6 +47,8 @@ class OrNode(ASTNode):
         self.left = left
         self.right = right
         self.children = [left, right]
+        self.min = 1
+        self.max = 1
 
 
 # unused
