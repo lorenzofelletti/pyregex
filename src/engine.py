@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 from .pyrser import Pyrser
-from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement
+from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement, EndElement, StartElement
 
 
 class RegexEngine:
@@ -143,6 +143,19 @@ class RegexEngine:
 
                     continue
 
+                elif type(curr_tkn) is StartElement or type(curr_tkn) is EndElement:
+                    if type(curr_tkn) is StartElement and str_i == 0:
+                        i += 1
+                    elif type(curr_tkn) is EndElement and str_i == len(string):
+                        i +=1
+                    else:
+                        can_bt, bt_str_i = backtrack(backtrack_stack, str_i)
+                        if can_bt:
+                            str_i = bt_str_i
+                        else:
+                            return False, str_i
+                    continue
+
                 elif isinstance(curr_tkn, LeafNode):
                     # it is a LeafNode obviously now
                     min_, max_ = curr_tkn.min, curr_tkn.max
@@ -209,4 +222,14 @@ class RegexEngine:
                     return False, str_i
 
             return True, str_i
-        return match_group(ast=ast, string=string)
+
+        i = 0
+        _ = 0
+        while str_i < len(string):
+            res, _ = match_group(ast=ast, string=string)
+            if res:
+                return True, str_i
+            else:
+                str_i = i
+            i += 1
+        return False, _

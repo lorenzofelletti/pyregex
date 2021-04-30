@@ -23,8 +23,8 @@ class Pyrser:
     def parse(self, re):
         """
         REGEX GRAMMAR recognized:
-        RE ::= '^'? RE_SEQ | '$'
-        RE_SEQ ::= GROUP ('|' RE_SEQ)?
+        RE ::= RE_SEQ
+        RE_SEQ ::= '^'? GROUP '$'? ('|' RE_SEQ)?
         GROUP ::= (RANGE_EL QTIFIER?)*
         RANGE_EL= EL | '[' INNER_EL ']'
         EL ::= '\\'? (ch | SPECIAL) | '(' RE_SEQ ')'
@@ -60,59 +60,32 @@ class Pyrser:
             return next_tkn
 
         def parse_re():
-            match_start, match_end = True, True
-            if isinstance(curr_tkn, StartToken):
-                next_tkn()
-            else:
-                match_start = False
+            return RE(parse_re_seq())
 
-            node = RE(parse_re_seq())
+        def parse_re_seq():
+            match_start, match_end = False, False
+            if type(curr_tkn) is Start or type(curr_tkn) is Circumflex:
+                next_tkn()
+                match_start = True
+
+            node = parse_group()
 
             if isinstance(curr_tkn, EndToken):
                 next_tkn()
+                match_end = True
             else:
                 match_end = False
 
-            if not match_start:
-                any_at_start = WildcardElement()
-                any_at_start.min, any_at_start.max = 0, np.inf
-                if type(node.child) is GroupNode:
-                    node.child.children = np.insert(
-                        node.child.children, 0, any_at_start)
-                    node.children = [node.child]
-                else:
-                    # is OrNode
-                    new_re_child = GroupNode(
-                        children=np.array([any_at_start, node.child]))
-                    node.child = new_re_child
-                    node.children = [node.child]
+            if match_start:
+                node.children = np.insert(node.children, 0, StartElement())
+            if match_end:
+                node.children = np.append(node.children, EndElement())
 
-            if not match_end:
-                any_at_end = WildcardElement()
-                any_at_end.min, any_at_end.max = 0, np.inf
-                if type(node.child) is GroupNode:
-                    node.child.children = np.append(
-                        node.child.children, any_at_end)
-                    node.children = [node.child]
-                else:
-                    new_re_child = GroupNode(
-                        children=np.array([node.child, any_at_end]))
-                    node.child = new_re_child
-                    node.children = [node.child]
+            if isinstance(curr_tkn, OrToken):
+                next_tkn()
+                node = OrNode(left=node, right=parse_re_seq())
 
             return node
-
-            if match_start:
-                RE.match_start = True
-            if match_end:
-                RE.match_end = True
-
-        def parse_re_seq():
-            elements = parse_group()
-            while isinstance(curr_tkn, OrToken):
-                next_tkn()
-                elements = OrNode(left=elements, right=parse_group())
-            return elements
 
         def parse_group():
             elements = np.array([])  # holds the children of the GroupNode

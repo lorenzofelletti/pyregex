@@ -40,6 +40,24 @@ class RangeElement(LeafNode):
         self.max = 1
 
 
+class StartElement(LeafNode):
+    def __init__(self):
+        super().__init__()
+        self.type = 'startElement'
+        self.match = 0
+        self.min = 1
+        self.max = 1
+
+
+class EndElement(LeafNode):
+    def __init__(self):
+        super().__init__()
+        self.type = 'endElement'
+        self.match = 'len(string)'
+        self.min = 1
+        self.max = 1
+
+
 class OrNode(ASTNode):
     def __init__(self, left, right):
         super().__init__()
