@@ -78,8 +78,4 @@ class Lexer:
             escape_found = False
             i += 1
 
-        if not isinstance(tokens[0], StartToken):
-            tokens = np.append([Wildcard(), Asterisk()], tokens)
-        if not isinstance(tokens[len(tokens)-1], EndToken):
-            tokens = np.append(tokens, [Wildcard(), Asterisk()])
         return tokens
