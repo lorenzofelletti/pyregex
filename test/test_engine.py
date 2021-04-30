@@ -99,3 +99,23 @@ def test_match_or_right(reng):
 def test_match_or_right_at_start_end(reng):
     res, cons = reng.match('^na|nb$', 'nb')
     assert res == True
+
+
+def test_no_match_after_end(reng):
+    res, cons = reng.match('^na|nb$', 'nb ')
+    assert res == False
+
+
+def test_match_sequence_with_start_end_correctly(reng):
+    res, cons = reng.match('^a|b$', 'a  ')
+    assert res == True
+
+    res, cons = reng.match('^a|b$', ' a  ')
+    assert res == False
+
+    res, cons = reng.match('^a|b$', '  b')
+    assert res == True
+
+    res, cons = reng.match('^a|b$', '  b ')
+    assert res == False
+
