@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from .pyrser import Pyrser
 from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement
 
@@ -27,7 +28,7 @@ class RegexEngine:
                 return False, str_i
             elif matched_times == min_:
                 if min_ != 0:
-                    return False, str
+                    return False, str_i
                 else:
                     # min for the popped element is 0 so i can try popping another (recursive call)
                     return backtrack(backtrack_stack, str_i)
@@ -57,96 +58,87 @@ class RegexEngine:
 
             # the passed ast can't be a Leaf
             while i < len(ast.children):
-                # if str_i == len(string) - 1:
-                # i consumed all the input string
-                #    break
                 curr_tkn = ast.children[i]
 
                 # if is OrNode I evaluate the sub-groups with a recursive call
                 if isinstance(curr_tkn, OrNode):
-                    min_, max_ = curr_tkn.min, curr_tkn.max
-                    bt_node = curr_tkn
-                    bt_min = min_
-                    consumed_list = []
                     before_str_i = str_i
+                    min_, max_ = curr_tkn.min, curr_tkn.max
                     j = 0
+                    consumed_list = []
 
                     backtracking = False
                     while j < max_:
-                        #TODO: il while loop come per gli altri
+                        tmp_str_i = str_i
+                        #before_backtrack_stack = copy.deepcopy(backtrack_stack)
                         res, new_str_i = match_group(
                             ast=curr_tkn.left, string=string)
-
                         if res == True:
-                            # yeah it's true, I'm done w/ this or!!
-                            consumed_list.append(new_str_i - str_i)
-                            str_i = new_str_i  # update the consumed characters
+                            pass
                         else:
-                            # nooo I must try the other one :(
+                            str_i = tmp_str_i
                             res, new_str_i = match_group(
                                 ast=curr_tkn.right, string=string)
-                            if res == True:
-                                # yeah!
-                                consumed_list.append(new_str_i - str_i)
-                                str_i = new_str_i
-                            elif min_ <= j:
-                                break
-                            else:
-                                can_bt, bt_str_i = backtrack(
-                                    backtrack_stack, before_str_i)
-                                if can_bt:
-                                    new_str_i = bt_str_i
-                                    backtracking = True
-                                    break
-                                else:
-                                    return False, new_str_i
-                        j += 1
 
+                        if res == True:
+                            before_str_i
+                            consumed_list.append(new_str_i - tmp_str_i)
+                        elif min_ <= j:
+                            break
+                        else:
+                            can_bt, bt_str_i = backtrack(
+                                backtrack_stack, str_i)
+                            if can_bt:
+                                str_i = bt_str_i
+                                backtracking = True
+                                break  # retry to match the current node
+                            else:
+                                return False, str_i
+                        j += 1
                     if not backtracking:
-                        backtrack_stack.append((curr_tkn, bt_min, j, consumed_list))
+                        backtrack_stack.append(
+                            (curr_tkn, min_, j, consumed_list))
                         i += 1
-                    
                     continue
 
                 elif isinstance(curr_tkn, GroupNode):
                     min_, max_ = curr_tkn.min, curr_tkn.max
                     j = 0
-
-                    bt_node = curr_tkn
-                    bt_min = min_
                     consumed_list = []
-
                     before_str_i = str_i
 
                     backtracking = False
                     while j < max_:
+                        tmp_str_i = str_i
+
                         res, new_str_i = match_group(
                             ast=curr_tkn, string=string)
                         if res == True:
                             # yes! Come on!
-                            consumed_list.append(new_str_i - str_i)
-                            str_i = new_str_i
+                            # i must use the before_str_i because str_i is changed by the match_group
+                            # call, so (new_str_i - str_i) would be always 0
+                            consumed_list.append(new_str_i - tmp_str_i)
+                            #str_i = new_str_i
                         elif min_ <= j:
                             # i did the bare minimum or more
                             break
                         else:
-                            # TODO: try to backtrack
                             can_bt, bt_str_i = backtrack(
-                                backtrack_stack, before_str_i)
+                                backtrack_stack, str_i)
                             if can_bt:
-                                new_str_i = bt_str_i
+                                str_i = bt_str_i
                                 backtracking = True
                                 break  # retry to match the current node
                             else:
-                                return False, new_str_i
+                                return False, str_i
                         j += 1
 
                     # if NOT backtracking iterate the next element, and put the
-                    # current on the backtrac_stack, otherwise don't increment i, don't put on the
+                    # current on the backtrack_stack, otherwise don't increment i, don't put on the
                     # stack so to retry the current one (just continue)
                     if not backtracking:
                         backtrack_stack.append(
-                            (curr_tkn, bt_min, j, consumed_list))
+                            (curr_tkn, min_, j, consumed_list))
                         i += 1
 
                     continue
@@ -158,8 +150,6 @@ class RegexEngine:
                         curr_tkn) is WildcardElement else True
                     j = 0
 
-                    bt_node = curr_tkn
-                    bt_min = min_
                     consumed_list = []
 
                     before_str_i = str_i  # to discard changes made in case i need to bt
@@ -175,7 +165,6 @@ class RegexEngine:
                                 elif min_ <= j:
                                     break
                                 else:
-                                    # TODO: try to backtrack
                                     can_bt, bt_str_i = backtrack(
                                         backtrack_stack, before_str_i)
                                     if can_bt:
@@ -188,7 +177,6 @@ class RegexEngine:
                                 consumed_list.append(1)
                                 str_i += 1
                             else:
-                                # TODO: try to backtrack
                                 can_bt, bt_str_i = backtrack(
                                     backtrack_stack, before_str_i)
                                 if can_bt:
@@ -203,7 +191,6 @@ class RegexEngine:
                                 break
                             else:
                                 # i have more states, but the input is finished
-                                # TODO: try to backtrack
                                 can_bt, bt_str_i = backtrack(
                                     backtrack_stack, before_str_i)
                                 if can_bt:
@@ -215,7 +202,7 @@ class RegexEngine:
                         j += 1
                     if not backtracking:
                         backtrack_stack.append(
-                            (curr_tkn, bt_min, j, consumed_list))
+                            (curr_tkn, min_, j, consumed_list))
                         i += 1
                     continue
                 else:
