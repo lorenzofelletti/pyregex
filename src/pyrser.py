@@ -108,57 +108,49 @@ class Pyrser:
                         # suppose it's 1+
                         new_el.min, new_el.max = 1, np.inf
                     next_tkn()
-
-                if isinstance(curr_tkn, LeftCurlyBrace):
-                    next_tkn()
-                    if isinstance(curr_tkn, ElementToken):
-                        val_1 = int(curr_tkn.char)
-
-                        next_tkn()
-                        if isinstance(curr_tkn, Comma):
-                            next_tkn()
-                            if isinstance(curr_tkn, Element):
-                                val_2 = int(curr_tkn.char)
-                                new_el.min, new_el.max = val_1, val_2
-
-                                next_tkn()
-                                if not isinstance(curr_tkn, RightCurlyBrace):
-                                    raise Exception(
-                                        'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
-                            elif isinstance(curr_tkn, RightCurlyBrace):
-                                new_el.min = val_1
-                                new_el.max = np.inf
-                            else:
-                                raise Exception(
-                                    'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
-                        elif isinstance(curr_tkn, RightCurlyBrace):
-                            new_el.min, new_el.max = val_1, val_1
-                        else:
-                            raise Exception(
-                                'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
-
-                    elif isinstance(curr_tkn, Comma):
-                        new_el.min = 0
-                        next_tkn()
-                        if isinstance(curr_tkn, Element):
-                            new_el.max = int(curr_tkn.char)
-                            next_tkn()
-                            if not isinstance(curr_tkn, RightCurlyBrace):
-                                raise Exception(
-                                    'Invalid curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
-                        else:
-                            raise Exception(
-                                'Invalide curly brace syntax.\nUse one of the legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
-
-                    else:
-                        raise Exception(
-                            'Escape the \'{\'curly brace or use one of the following legal syntaxes:\n\t{min,max}\n\t{min,}\n\t{,max}')
-                    next_tkn()
+                elif isinstance(curr_tkn, LeftCurlyBrace):
+                    parse_curly(new_el)
 
                 elements = np.append(elements, new_el)
                 # next_tkn()
 
             return GroupNode(children=elements)
+
+        def parse_curly(new_el):
+            # move past the left brace
+            next_tkn()
+
+            # find val_1, val_2
+            val_1, val_2 = '', ''
+            try:
+                while isinstance(curr_tkn, ElementToken):
+                    val_1 += curr_tkn.char
+                    next_tkn()
+                val_1 = int(val_1)
+
+                if isinstance(curr_tkn, RightCurlyBrace):
+                    # I'm in the case {exact}
+                    if type(val_1) is int:
+                        new_el.min, new_el.max = val_1, val_1
+                        next_tkn()  # skip the closing brace
+                        return
+                    else:
+                        raise Exception()
+
+                next_tkn()
+                while isinstance(curr_tkn, ElementToken):
+                    val_2 += curr_tkn.char
+                    next_tkn()
+                val_2 = int(val_2)
+
+                # skip the closing brace
+                next_tkn()
+
+                new_el.min = val_1 if type(val_1) is int else 0
+                new_el.max = val_2 if type(val_2) is int else np.inf
+
+            except Exception as e:
+                raise Exception('Invalid curly brace syntax.')
 
         def parse_range_el():
             if isinstance(curr_tkn, LeftBracket):
@@ -254,7 +246,8 @@ class Pyrser:
                 else:
                     raise Exception('Missing closing group parenthesis \')\'')
             else:
-                return
+                raise Exception(
+                    'Unescaped special character {}'.format(curr_tkn.ch))
 
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)

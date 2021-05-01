@@ -14,6 +14,7 @@ class WildcardToken(Token):
         super().__init__()
         self.type = 'wildcard'
         self.wildcard_ch = wildcard_ch
+        self.char = wildcard_ch
 
 
 class Wildcard(WildcardToken):
@@ -26,6 +27,7 @@ class StartToken(Token):
         super().__init__()
         self.type = 'start'
         self.start_ch = start_ch
+        self.char = start_ch
 
 
 class Start(StartToken):
@@ -38,6 +40,7 @@ class EndToken(Token):
         super().__init__()
         self.type = 'end'
         self.end_ch = end_ch
+        self.char = end_ch
 
 
 class End(EndToken):
@@ -50,12 +53,14 @@ class Escape(Token):
         super().__init__()
         self.type = 'escape'
         self.escape_char = '\\'
+        self.char = '\\'
 
 
 class Comma(Token):
     def __init__(self):
         super().__init__()
         self.type = 'comma'
+        self.char = ','
 
 
 class Parenthesis(Token):
@@ -68,11 +73,13 @@ class Parenthesis(Token):
 class LeftParenthesis(Parenthesis):
     def __init__(self):
         super().__init__(side='L')
+        self.char = '('
 
 
 class RightParenthesis(Parenthesis):
     def __init__(self):
         super().__init__(side='R')
+        self.char = ')'
 
 
 class CurlyBrace(Token):
@@ -85,11 +92,13 @@ class CurlyBrace(Token):
 class LeftCurlyBrace(CurlyBrace):
     def __init__(self):
         super().__init__(side='L')
+        self.char = '{'
 
 
 class RightCurlyBrace(CurlyBrace):
     def __init__(self):
         super().__init__(side='R')
+        self.char = '}'
 
 
 class Bracket(Token):
@@ -102,11 +111,13 @@ class Bracket(Token):
 class LeftBracket(Bracket):
     def __init__(self):
         super().__init__(side='L')
+        self.char = '['
 
 
 class RightBracket(Bracket):
     def __init__(self):
         super().__init__(side='R')
+        self.char = ']'
 
 
 class Quantifier(Token):
@@ -115,6 +126,7 @@ class Quantifier(Token):
         self.type = 'qtifier'
         self.quantity = quantity
         self.qtifier_char = qtifier_char
+        self.char = qtifier_char
 
 
 class ZeroOrMore(Quantifier):
@@ -152,6 +164,7 @@ class OrToken(Token):
         super().__init__()
         self.type = 'or'
         self.or_ch = or_ch
+        self.char = or_ch
 
 
 class VerticalBar(OrToken):
@@ -164,6 +177,7 @@ class NotToken(Token):
         super().__init__()
         self.type = 'not'
         self.not_ch = not_ch
+        self.char = not_ch
 
 
 class Circumflex(NotToken):
@@ -176,3 +190,4 @@ class Dash(Token):
         super().__init__()
         self.type = 'dash'
         self.ch = '-'
+        self.char = '-'

@@ -72,6 +72,8 @@ class Lexer:
                 append(Plus())
             elif ch == '|':
                 append(VerticalBar())
+            elif ch == '}':
+                append(RightCurlyBrace())
             else:
                 append(ElementToken(char=ch))
 
