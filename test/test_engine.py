@@ -119,3 +119,11 @@ def test_match_sequence_with_start_end_correctly(reng):
     res, cons = reng.match('^a|b$', '  b ')
     assert res == False
 
+
+def test_complex_match_3(reng):
+    res, _ = reng.match('a(b|[c-n])+b{3}.{2}', 'ahhbbbbbb')
+    assert res == True
+
+def test_bit_less_complex_match_3(reng):
+    res, _ = reng.match('a(b|[c-n])+b{3}', 'ahhbbbbbb')
+    assert res == True
