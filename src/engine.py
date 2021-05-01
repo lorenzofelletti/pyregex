@@ -14,30 +14,36 @@ class RegexEngine:
         curr_tkn = ast
         str_i = 0  # matched string chars so far
 
-        def backtrack(backtrack_stack: list, str_i):
+        def backtrack(backtrack_stack: list, str_i, curr_i):
             '''
             Retun a tuple: 
              - bool: can/can't I backtrack
              - new_str_i: the new str_i to use
             '''
             if len(backtrack_stack) == 0:
-                return False, str_i
-            node, min_, matched_times, consumed_list = backtrack_stack.pop()
+                return False, str_i, curr_i
 
-            if node is None:
-                return False, str_i
+            node_i, min_, matched_times, consumed_list = backtrack_stack.pop()
+
+            if node_i is None:
+                # the backtrack_stack is empty
+                return False, str_i, curr_i
             elif matched_times == min_:
-                if min_ != 0:
-                    return False, str_i
-                else:
-                    # min for the popped element is 0 so i can try popping another (recursive call)
-                    return backtrack(backtrack_stack, str_i)
+                # calculate_the new correct str_i
+                for consumption in consumed_list:
+                    str_i -= consumption
+                # recursive call
+                return backtrack(backtrack_stack, str_i, node_i)
             else:
-                last_consumed = consumed_list.pop()
-                new_str_i = str_i - last_consumed
-                backtrack_stack.append(
-                    (node, min_, matched_times - 1, consumed_list))
-                return True, new_str_i
+                if len(consumed_list) == 0:
+                    return False, str_i, curr_i
+
+                else:
+                    last_consumed = consumed_list.pop()
+                    new_str_i = str_i - last_consumed
+                    backtrack_stack.append(
+                        (node_i, min_, matched_times - 1, consumed_list))
+                    return True, new_str_i, curr_i
 
         def match_group(ast: ASTNode, string: str):
             '''
@@ -70,7 +76,6 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         tmp_str_i = str_i
-                        #before_backtrack_stack = copy.deepcopy(backtrack_stack)
                         res, new_str_i = match_group(
                             ast=curr_tkn.left, string=string)
                         if res == True:
@@ -81,14 +86,14 @@ class RegexEngine:
                                 ast=curr_tkn.right, string=string)
 
                         if res == True:
-                            before_str_i
                             consumed_list.append(new_str_i - tmp_str_i)
                         elif min_ <= j:
                             break
                         else:
-                            can_bt, bt_str_i = backtrack(
-                                backtrack_stack, str_i)
+                            can_bt, bt_str_i, bt_i = backtrack(
+                                backtrack_stack, str_i, i)
                             if can_bt:
+                                i = bt_i
                                 str_i = bt_str_i
                                 backtracking = True
                                 break  # retry to match the current node
@@ -97,7 +102,7 @@ class RegexEngine:
                         j += 1
                     if not backtracking:
                         backtrack_stack.append(
-                            (curr_tkn, min_, j, consumed_list))
+                            (i, min_, j, consumed_list))
                         i += 1
                     continue
 
@@ -123,9 +128,10 @@ class RegexEngine:
                             # i did the bare minimum or more
                             break
                         else:
-                            can_bt, bt_str_i = backtrack(
-                                backtrack_stack, str_i)
+                            can_bt, bt_str_i, bt_i = backtrack(
+                                backtrack_stack, str_i, i)
                             if can_bt:
+                                i = bt_i
                                 str_i = bt_str_i
                                 backtracking = True
                                 break  # retry to match the current node
@@ -138,7 +144,7 @@ class RegexEngine:
                     # stack so to retry the current one (just continue)
                     if not backtracking:
                         backtrack_stack.append(
-                            (curr_tkn, min_, j, consumed_list))
+                            (i, min_, j, consumed_list))
                         i += 1
 
                     continue
@@ -147,10 +153,12 @@ class RegexEngine:
                     if type(curr_tkn) is StartElement and str_i == 0:
                         i += 1
                     elif type(curr_tkn) is EndElement and str_i == len(string):
-                        i +=1
+                        i += 1
                     else:
-                        can_bt, bt_str_i = backtrack(backtrack_stack, str_i)
+                        can_bt, bt_str_i, bt_i = backtrack(
+                            backtrack_stack, str_i, i)
                         if can_bt:
+                            i = bt_i
                             str_i = bt_str_i
                         else:
                             return False, str_i
@@ -178,9 +186,10 @@ class RegexEngine:
                                 elif min_ <= j:
                                     break
                                 else:
-                                    can_bt, bt_str_i = backtrack(
-                                        backtrack_stack, before_str_i)
+                                    can_bt, bt_str_i, bt_i = backtrack(
+                                        backtrack_stack, before_str_i, i)
                                     if can_bt:
+                                        i = bt_i
                                         str_i = bt_str_i
                                         backtracking = True
                                         break
@@ -190,9 +199,10 @@ class RegexEngine:
                                 consumed_list.append(1)
                                 str_i += 1
                             else:
-                                can_bt, bt_str_i = backtrack(
-                                    backtrack_stack, before_str_i)
+                                can_bt, bt_str_i, bt_i = backtrack(
+                                    backtrack_stack, before_str_i, i)
                                 if can_bt:
+                                    i = bt_i
                                     str_i = bt_str_i
                                     backtracking = True
                                     break
@@ -204,9 +214,10 @@ class RegexEngine:
                                 break
                             else:
                                 # i have more states, but the input is finished
-                                can_bt, bt_str_i = backtrack(
-                                    backtrack_stack, before_str_i)
+                                can_bt, bt_str_i, bt_i = backtrack(
+                                    backtrack_stack, before_str_i, i)
                                 if can_bt:
+                                    i = bt_i
                                     str_i = bt_str_i
                                     backtracking = True
                                     break
@@ -215,7 +226,7 @@ class RegexEngine:
                         j += 1
                     if not backtracking:
                         backtrack_stack.append(
-                            (curr_tkn, min_, j, consumed_list))
+                            (i, min_, j, consumed_list))
                         i += 1
                     continue
                 else:
