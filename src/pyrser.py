@@ -247,7 +247,7 @@ class Pyrser:
                     raise Exception('Missing closing group parenthesis \')\'')
             else:
                 raise Exception(
-                    'Unescaped special character {}'.format(curr_tkn.ch))
+                    'Unescaped special character {}'.format(curr_tkn.char))
 
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)
