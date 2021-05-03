@@ -124,6 +124,21 @@ def test_complex_match_3(reng):
     res, _ = reng.match('a(b|[c-n])+b{3}.{2}', 'ahhbbbbbb')
     assert res == True
 
+
 def test_bit_less_complex_match_3(reng):
     res, _ = reng.match('a(b|[c-n])+b{3}', 'ahhbbbbbb')
     assert res == True
+
+
+def test_unescaped_special_ch(reng):
+    with pytest.raises(Exception):
+        reng.match('$a^', 'aa')
+
+
+def test_various_emails(reng):
+    res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@hotmail.it')
+    assert res == True
+    res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@gmail.com')
+    assert res == True
+    res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@hotmaila.com')
+    assert res == False
