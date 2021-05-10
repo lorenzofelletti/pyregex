@@ -77,7 +77,7 @@ class Pyrser:
                 match_end = False
 
             if match_start:
-                node.children = np.insert(node.children, 0, StartElement())
+                node.children = np.append(StartElement(), node.children)
             if match_end:
                 node.children = np.append(node.children, EndElement())
 
@@ -90,7 +90,9 @@ class Pyrser:
         def parse_group():
             elements = np.array([])  # holds the children of the GroupNode
 
-            while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and not isinstance(curr_tkn, RightParenthesis):
+            while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
+                    not isinstance(curr_tkn, RightParenthesis) and \
+                    not isinstance(curr_tkn, EndToken):
                 new_el = parse_range_el()
 
                 next_tkn()
