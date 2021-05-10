@@ -142,3 +142,12 @@ def test_various_emails(reng):
     assert res == True
     res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@hotmaila.com')
     assert res == False
+
+
+def test_match_empty(reng):
+    res, _ = reng.match('^$', '')
+    assert res == True
+    res, _ = reng.match('$', '')
+    assert res == True
+    res, _ = reng.match('^', '')
+    assert res == True
