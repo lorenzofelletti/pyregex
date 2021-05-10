@@ -254,4 +254,9 @@ class Pyrser:
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)
         next_tkn()
-        return parse_re()
+
+        ast = parse_re()
+        if curr_tkn is not None:
+            raise Exception(
+                "Unable to parse the entire regex.\nCheck the regex and try again.")
+        return ast
