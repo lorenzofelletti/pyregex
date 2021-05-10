@@ -236,6 +236,10 @@ class RegexEngine:
 
         i = 0
         _ = 0
+
+        if len(string) == 0:
+            return match_group(ast=ast, string=string)
+
         while str_i < len(string):
             res, _ = match_group(ast=ast, string=string)
             if res:
