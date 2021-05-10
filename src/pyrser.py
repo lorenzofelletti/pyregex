@@ -26,7 +26,7 @@ class Pyrser:
         RE ::= RE_SEQ
         RE_SEQ ::= '^'? GROUP '$'? ('|' RE_SEQ)?
         GROUP ::= (RANGE_EL QTIFIER?)*
-        RANGE_EL= EL | '[' INNER_EL ']'
+        RANGE_EL ::= EL | '[' INNER_EL ']'
         EL ::= '\\'? (ch | SPECIAL) | '(' RE_SEQ ')'
 
         QTIFIER ::= '*' | '+' | '?' | '{' (num, ',')? num '}'
