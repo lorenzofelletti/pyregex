@@ -25,12 +25,12 @@ class Pyrser:
         REGEX GRAMMAR recognized:
         RE ::= RE_SEQ
         RE_SEQ ::= '^'? GROUP '$'? ('|' RE_SEQ)?
-        GROUP ::= (RANGE_EL QTIFIER?)*
+        GROUP ::= (RANGE_EL QTIFIER?)+
         RANGE_EL ::= EL | '[' INNER_EL ']'
         EL ::= '\\'? (ch | SPECIAL) | '(' RE_SEQ ')'
 
         QTIFIER ::= '*' | '+' | '?' | '{' (num, ',')? num '}'
-        INNER_EL ::= BASE_EL+ | BASE_EL '-' BASE_EL ('|' INNER_EL)*
+        INNER_EL ::= EL+ | EL '-' EL ('|' INNER_EL)
         SPECIAL ::= '(' | ')' | '+' | '{' | '[' | '|' | '.' | '^' | '$' | ...
         """
         alphabet_characters = 'abcdefghijklmnopqrstuvwxyz'
