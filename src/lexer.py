@@ -10,7 +10,7 @@ class Lexer:
     def __is_digit__(self, ch):
         return self.__digits__.find(ch) > -1
 
-    def scan(self, re):
+    def scan(self, re: str):
         tokens = np.array([])
 
         def append(elem):

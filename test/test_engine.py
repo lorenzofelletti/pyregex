@@ -67,22 +67,22 @@ def test_complex_match_2(reng):
 
 
 def test_match_mail_simple(reng):
-    res, cons = reng.match('.*@.*\.(com|it)', 'vr@gmail.com')
+    res, cons = reng.match(r'.*@.*\.(com|it)', 'vr@gmail.com')
     assert res == True
 
 
 def test_bt_index_leaf(reng):
-    res, cons = reng.match('^aaaa.*a$', 'aaaaa')
+    res, cons = reng.match(r'^aaaa.*a$', 'aaaaa')
     assert res == True
 
 
 def test_bt_index_or(reng):
-    res, cons = reng.match('^x(a|b)?bc$', 'xbc')
+    res, cons = reng.match(r'^x(a|b)?bc$', 'xbc')
     assert res == True
 
 
 def test_bt_index_group(reng):
-    res, cons = reng.match('^x(a)?ac$', 'xac')
+    res, cons = reng.match(r'^x(a)?ac$', 'xac')
     assert res == True
 
 

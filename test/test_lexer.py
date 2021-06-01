@@ -14,12 +14,12 @@ def test_simple_re_lexing(lexer):
 
 
 def test_escaping_char(lexer):
-    tokens = lexer.scan('a\\a\\t\.')
-    assert type(tokens[1]) is ElementToken and tokens[1].char == 'a'
+    tokens = lexer.scan(r'a\\a\\t\.')
+    assert type(tokens[1]) is ElementToken and tokens[1].char == '\\'
 
 
 def test_escaping_get_tab(lexer):
-    tokens = lexer.scan('a\h\t')
+    tokens = lexer.scan(r'a\h\t')
     assert type(tokens[2]) is ElementToken and tokens[2].char == '\t'
 
 
