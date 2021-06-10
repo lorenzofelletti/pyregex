@@ -29,7 +29,7 @@ class Pyrser:
         RANGE_EL ::= EL | '[' INNER_EL ']'
         EL ::= '\\'? (ch | SPECIAL) | '(' RE_SEQ ')'
 
-        QTIFIER ::= '*' | '+' | '?' | '{' (num, ',')? num '}'
+        QTIFIER ::= '*' | '+' | '?' | '{' (num)? ',' num '}' | '{' num '}'
         INNER_EL ::= EL+ | EL '-' EL ('|' INNER_EL)
         SPECIAL ::= '(' | ')' | '+' | '{' | '[' | '|' | '.' | '^' | '$' | ...
         """
