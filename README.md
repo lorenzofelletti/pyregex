@@ -4,10 +4,6 @@ Pyregex is a Regex Engine with backtracking and all major regular-expressions' f
 
 It is composed of a Lexer, a Parser (a TDRD parser) and finally the Engine.
 
-A deeper insight on the project is available:
- - [here](https://medium.com/geekculture/how-to-build-a-regex-engine-in-python-part-1-the-grammar-d3cc91cc1784)
- - or [here](https://dev.to/lorenzofelletti/how-to-build-a-regex-engine-in-python-part-1-the-grammar-2coa).
-
 Features implemented includes:
 | Feature | Syntax |
 |-|-|
