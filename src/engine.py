@@ -1,5 +1,3 @@
-import numpy as np
-import copy
 from .pyrser import Pyrser
 from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement, EndElement, StartElement
 
@@ -10,8 +8,7 @@ class RegexEngine:
 
     def match(self, re: str, string: str):
         ast = self.parser.parse(re=re)
-        prev_node = None
-        curr_tkn = ast
+
         str_i = 0  # matched string chars so far
 
         def backtrack(backtrack_stack: list, str_i, curr_i):
