@@ -151,3 +151,24 @@ def test_match_empty(reng):
     assert res == True
     res, _ = reng.match('^', '')
     assert res == True
+
+
+def test_match_space(reng):
+    res, _ = reng.match(r'\s', r' ')
+    assert res == True
+    res, _ = reng.match(r'\s', '\t')
+    assert res == True
+    res, _ = reng.match(r'\s', '\r')
+    assert res == True
+    res, _ = reng.match(r'\s', '\f')
+    assert res == True
+    res, _ = reng.match(r'\s', '\n')
+    assert res == True
+    res, _ = reng.match(r'\s', '\v')
+    assert res == True
+
+def test_match_space_2(reng):
+    res, _ = reng.match(r'\s+', '\r\t\n \f \v')
+    assert res == True
+    res, _ = reng.match(r'^\s$', '\r\t')
+    assert res == False
