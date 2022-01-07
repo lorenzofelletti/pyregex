@@ -239,7 +239,7 @@ class Pyrser:
                 return Element(match_ch=curr_tkn.char)
             elif isinstance(curr_tkn, Wildcard):
                 return WildcardElement()
-            elif isinstance(curr_tkn,SpaceToken):
+            elif isinstance(curr_tkn, SpaceToken):
                 return SpaceElement()
             elif isinstance(curr_tkn, LeftParenthesis):
                 next_tkn()
