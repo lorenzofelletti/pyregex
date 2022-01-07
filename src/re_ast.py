@@ -29,7 +29,13 @@ class LeafNode(ASTNode):
     def __init__(self):
         super().__init__()
 
-    def is_match(self, ch):
+    def is_match(self, str: str, str_i: int):
+        """
+        Returns a tuple of if a match were found, and how many characters were matched.
+        The parameters to be passed are:
+         * str: the (whole) test string
+         * str_i: the current consumed characters (of str) index.
+        """
         return False
 
 
