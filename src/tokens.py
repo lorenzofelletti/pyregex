@@ -17,6 +17,14 @@ class WildcardToken(Token):
         self.char = wildcard_ch
 
 
+class SpaceToken(Token):
+    def __init__(self, space_ch) -> None:
+        super().__init__()
+        self.type = 'space'
+        self.space_char = space_ch
+        self.char = space_ch
+
+
 class Wildcard(WildcardToken):
     def __init__(self):
         super().__init__(wildcard_ch='.')
