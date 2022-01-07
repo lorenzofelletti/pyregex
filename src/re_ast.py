@@ -29,9 +29,6 @@ class LeafNode(ASTNode):
     def __init__(self):
         super().__init__()
 
-    def is_match(self, ch):
-        return False
-
 
 class Element(LeafNode):
     """
