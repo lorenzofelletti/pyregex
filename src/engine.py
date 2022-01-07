@@ -164,8 +164,6 @@ class RegexEngine:
                 elif isinstance(curr_tkn, LeafNode):
                     # it is a LeafNode obviously now
                     min_, max_ = curr_tkn.min, curr_tkn.max
-                    match_str = curr_tkn.match if not type(
-                        curr_tkn) is WildcardElement else True
                     j = 0
 
                     consumed_list = []
@@ -175,24 +173,7 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         if str_i < len(string):  # i still have input to match
-                            if type(match_str) is bool:
-                                # i have a wildcard, that match anything but newline
-                                if "\n".find(string[str_i]) == -1:
-                                    consumed_list.append(1)
-                                    str_i += 1
-                                elif min_ <= j:
-                                    break
-                                else:
-                                    can_bt, bt_str_i, bt_i = backtrack(
-                                        backtrack_stack, before_str_i, i)
-                                    if can_bt:
-                                        i = bt_i
-                                        str_i = bt_str_i
-                                        backtracking = True
-                                        break
-                                    else:
-                                        return False, str_i
-                            elif match_str.find(string[str_i]) > -1:
+                            if curr_tkn.is_match(ch=string[str_i]):
                                 consumed_list.append(1)
                                 str_i += 1
                             else:
@@ -206,7 +187,7 @@ class RegexEngine:
                                 else:
                                     return False, str_i
                         else:  # finished input
-                            # finished input w/o finishing the re tree
+                            # finished input w/o finishing the regex tree
                             if min_ <= j:
                                 break
                             else:

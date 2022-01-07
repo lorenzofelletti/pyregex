@@ -24,6 +24,9 @@ class Lexer:
             if escape_found:
                 if ch == 't':
                     append(ElementToken(char='\t'))
+                if ch == 's':
+                    # \s matches a space character
+                    append(SpaceToken(space_ch=ch))
                 else:
                     append(ElementToken(char=ch))
             elif ch == '\\':
