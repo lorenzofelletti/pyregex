@@ -1,8 +1,18 @@
+import numpy as np
+
+
 class ASTNode:
+    """
+    Abstract Syntax Tree classes hierarchy base class.
+    """
     pass
 
 
 class RE(ASTNode):
+    """
+    AST class entry point for a regular expression's AST.
+    """
+
     def __init__(self, child):
         super().__init__()
         self.type = 're'
@@ -11,12 +21,24 @@ class RE(ASTNode):
 
 
 class LeafNode(ASTNode):
+    """
+    AST class defining the concept of leaf node.
+    Every leaf node inherits from this class. 
+    """
+
     def __init__(self):
         super().__init__()
 
+    def is_match(self, ch):
+        return False
+
 
 class Element(LeafNode):
-    def __init__(self, match_ch):
+    """
+    Specialization of the LeafNode class. This class models the elements of a regex.
+    """
+
+    def __init__(self, match_ch: str):
         super().__init__()
         self.type = 'element'
         self.match = match_ch
@@ -25,13 +47,35 @@ class Element(LeafNode):
 
 
 class WildcardElement(Element):
+    """
+    Specialization of the Element class to model the wildcard behavior.
+    """
+
     def __init__(self):
         super().__init__(match_ch='anything')
         self.type = 'wildcard_element'
         self.match = True
 
 
+class SpaceElement(Element):
+    """
+    Specialization of the element class to model the match-space behavior.
+    """
+
+    def __init__(self, match_ch: str):
+        super().__init__(match_ch)
+        self.type = 'space_element'
+        self.match = ' \t'
+        self.min = 1
+        self.max = np.inf
+
+
 class RangeElement(LeafNode):
+    """
+    Specialization of the LeafNode class modeling the range-element behavior,
+    that is that it matches with more than one character.
+    """
+
     def __init__(self, match_str):
         super().__init__()
         self.type = 'rangeElement'
@@ -41,6 +85,10 @@ class RangeElement(LeafNode):
 
 
 class StartElement(LeafNode):
+    """
+    Inherits from LeafNode and models the match-start-element behavior.
+    """
+
     def __init__(self):
         super().__init__()
         self.type = 'startElement'
@@ -50,6 +98,10 @@ class StartElement(LeafNode):
 
 
 class EndElement(LeafNode):
+    """
+    Inherits from LeafNode and models the match-end-element behavior.
+    """
+
     def __init__(self):
         super().__init__()
         self.type = 'endElement'
@@ -59,6 +111,11 @@ class EndElement(LeafNode):
 
 
 class OrNode(ASTNode):
+    """
+    Inherits from ASTNode and models the or-nodes, that is the nodes that
+    divides the regex into two possible matching paths.
+    """
+
     def __init__(self, left, right):
         super().__init__()
         self.type = 'orNode'
@@ -71,6 +128,10 @@ class OrNode(ASTNode):
 
 # unused
 class NotNode(ASTNode):
+    """
+    Inherits from ASTNode and models the not-node behavior.
+    """
+
     def __init__(self, child):
         super().__init__()
         self.type = 'notNode'
@@ -79,6 +140,10 @@ class NotNode(ASTNode):
 
 
 class GroupNode(ASTNode):
+    """
+    Inherits from ASTNode and models the group in a regex.
+    """
+
     def __init__(self, children):
         super().__init__()
         self.type = 'groupNode'
