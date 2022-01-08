@@ -13,6 +13,7 @@ Features implemented includes:
 | grouping | (...) |
 | alternative | a\|b |
 | wildcard | . |
+| space | \s |
 | quantifiers | ? * + |
 | curly brace quantification | {exact} {min,max} {,max} {min,} |
 | range element | [a-z\|A-Z\|^059] |
