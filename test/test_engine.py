@@ -178,16 +178,27 @@ def test_match_space_2(reng):
 def test_return_matches_simple(reng):
     res, _, matches = reng.match(r'a\s', r'a ', return_matches=True)
     assert res == True
-    assert len(matches) == 1
+    assert len(matches[0]) == 1
 
 
 def test_return_matches_two(reng):
     res, _m, matches = reng.match(r'a(b)+a', r'abba', return_matches=True)
     assert res == True
-    assert len(matches) == 3
+    assert len(matches[0]) == 2
 
 
 def test_non_capturing_group(reng):
-    res, _m, matches = reng.match(r'a(?:b)+a', r'abba', return_matches=True)
+    res, _, matches = reng.match(r'a(?:b)+a', r'abba', return_matches=True)
     assert res == True
-    assert len(matches) == 1
+    assert len(matches[0]) == 1
+
+
+def test_continue_after_match_and_return_matches_simple(reng):
+    res, _, matches = reng.match(
+        r'a', 'abba', continue_after_match=True, return_matches=True)
+    assert len(matches) == 2
+    assert len(matches[0]) == 1
+    x = matches[0]
+    assert matches[0][0].match == 'a'
+    assert len(matches[1]) == 1
+    assert matches[1][0].match == 'a'

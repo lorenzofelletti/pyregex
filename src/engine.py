@@ -1,4 +1,7 @@
+from pydoc import doc
 from typing import Callable
+
+from numpy import append
 from .pyrser import Pyrser
 from .match import Match
 from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement, EndElement, StartElement
@@ -8,7 +11,34 @@ class RegexEngine:
     def __init__(self):
         self.parser = Pyrser()
 
-    def match(self, re: str, string: str, return_matches=False):
+    def match(self, re: str, string: str, return_matches=False, continue_after_match=False):
+        def return_fnc(res: bool, str_i: int, all_matches: list, return_matches: bool):
+            if return_matches:
+                return res, str_i, all_matches
+            else:
+                return res, str_i
+
+        all_matches = []
+
+        res, str_i, matches = self.__match__(re, string, True)
+        if res:
+            all_matches.append(matches)
+
+        if not continue_after_match:
+            return return_fnc(res, str_i, all_matches, return_matches)
+
+        while True:
+            string = string[str_i:]
+            if not len(string) > 0:
+                return return_fnc(res, str_i, all_matches, return_matches)
+            res, str_i, matches = self.__match__(re, string, True)
+            if res:
+                all_matches.append(matches)
+
+    def __match__(self, re: str, string: str, return_matches=False):
+        """
+        Same as match, but always returns after the first match.
+        """
         ast = self.parser.parse(re=re)
         matches = []
 
@@ -58,7 +88,14 @@ class RegexEngine:
             res, end_idx = match_group(ast, string)
 
             if ast.is_capturing() and res == True:
-                matches.append(Match(start_idx, end_idx, string))
+                already_matched = False
+                for match in matches:
+                    if match.group_id == ast.id:
+                        match = Match(ast.id, start_idx, end_idx, string)
+                        already_matched = True
+                        break
+                if not already_matched:
+                    matches.append(Match(ast.id, start_idx, end_idx, string))
 
             return res, end_idx
 
@@ -238,7 +275,9 @@ class RegexEngine:
         _ = 0
 
         if len(string) == 0:
-            return save_matches(match_group=match_group, ast=ast, string=string, start_idx=0)
+            res, consumed = save_matches(
+                match_group=match_group, ast=ast, string=string, start_idx=0)
+            return return_fnc(res, consumed)
 
         while str_i < len(string):
             res, _ = save_matches(match_group=match_group,

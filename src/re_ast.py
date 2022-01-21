@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 
 
@@ -5,8 +6,10 @@ class ASTNode:
     """
     Abstract Syntax Tree classes hierarchy base class.
     """
+    id_iter = itertools.count()
 
     def __init__(self):
+        self.id = next(ASTNode.id_iter)
         self.type = 'astNode'
         self.__capturing__ = None
 
