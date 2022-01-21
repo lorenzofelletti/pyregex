@@ -57,7 +57,7 @@ class RegexEngine:
 
             res, end_idx = match_group(ast, string)
 
-            if ast.is_capturing() and res == True:  # qui ci va la condizione se il GroupNode è capturing o no
+            if ast.is_capturing() and res == True:
                 matches.append(Match(start_idx, end_idx, string))
 
             return res, end_idx
