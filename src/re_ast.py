@@ -5,7 +5,13 @@ class ASTNode:
     """
     Abstract Syntax Tree classes hierarchy base class.
     """
-    pass
+
+    def __init__(self):
+        self.type = 'astNode'
+        self.__capturing__ = None
+
+    def is_capturing(self):
+        return self.__capturing__
 
 
 class RE(ASTNode):
@@ -16,8 +22,12 @@ class RE(ASTNode):
     def __init__(self, child):
         super().__init__()
         self.type = 're'
+        # self.__capturing__ = True
         self.child = child
         self.children = [child]
+
+    # def is_capturing(self):
+    #    return self.__capturing__
 
 
 class LeafNode(ASTNode):
@@ -76,7 +86,7 @@ class SpaceElement(Element):
 
     def __init__(self):
         super().__init__('apce')
-        self.type = 'space_element'
+        self.type = 'spaceElement'
         self.match = True
 
     def is_match(self, ch: str):
@@ -160,9 +170,13 @@ class GroupNode(ASTNode):
     Inherits from ASTNode and models the group in a regex.
     """
 
-    def __init__(self, children):
+    def __init__(self, children, capturing=False):
         super().__init__()
         self.type = 'groupNode'
+        self.__capturing__ = capturing
         self.children = children
         self.min = 1
         self.max = 1
+
+    def is_capturing(self):
+        return self.__capturing__

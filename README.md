@@ -11,6 +11,7 @@ Features implemented includes:
 | match end | ...$ |
 | escaping | \\ |
 | grouping | (...) |
+| non-capturing group | (?:...) |
 | alternative | a\|b |
 | wildcard | . |
 | space | \s |

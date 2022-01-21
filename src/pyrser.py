@@ -27,7 +27,7 @@ class Pyrser:
         RE_SEQ ::= '^'? GROUP '$'? ('|' RE_SEQ)?
         GROUP ::= (RANGE_EL QTIFIER?)+
         RANGE_EL ::= EL | '[' INNER_EL ']'
-        EL ::= '\\'? (ch | SPECIAL) | '(' RE_SEQ ')'
+        EL ::= '\\'? (ch | SPECIAL) | '(' ('?:')? RE_SEQ ')'
 
         QTIFIER ::= '*' | '+' | '?' | '{' (num)? ',' num '}' | '{' num '}'
         INNER_EL ::= EL+ | EL '-' EL ('|' INNER_EL)
@@ -47,10 +47,14 @@ class Pyrser:
 
             i = -1
 
-            def next_tkn():
+            def next_tkn(without_consuming=False):
                 nonlocal i
                 nonlocal tokens
                 nonlocal curr_tkn
+
+                if without_consuming:
+                    return tokens[i+1] if len(tokens) > i+1 else None
+
                 i += 1
                 if i < len(tokens):
                     curr_tkn = tokens[i]
@@ -62,13 +66,13 @@ class Pyrser:
         def parse_re():
             return RE(parse_re_seq())
 
-        def parse_re_seq():
+        def parse_re_seq(capturing=True):
             match_start, match_end = False, False
             if type(curr_tkn) is Start or type(curr_tkn) is Circumflex:
                 next_tkn()
                 match_start = True
 
-            node = parse_group()
+            node = parse_group(capturing=capturing)
 
             if isinstance(curr_tkn, EndToken):
                 next_tkn()
@@ -87,7 +91,7 @@ class Pyrser:
 
             return node
 
-        def parse_group():
+        def parse_group(capturing=True):
             elements = np.array([])  # holds the children of the GroupNode
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
@@ -116,7 +120,7 @@ class Pyrser:
                 elements = np.append(elements, new_el)
                 # next_tkn()
 
-            return GroupNode(children=elements)
+            return GroupNode(children=elements, capturing=capturing)
 
         def parse_curly(new_el):
             # move past the left brace
@@ -243,7 +247,19 @@ class Pyrser:
                 return SpaceElement()
             elif isinstance(curr_tkn, LeftParenthesis):
                 next_tkn()
-                res = parse_re_seq()
+                # (?: for non-capturing group
+                capturing = True
+                if type(curr_tkn) is QuestionMark:
+                    next_tkn()
+                    if type(curr_tkn) is ElementToken and curr_tkn.char == ':':
+                        capturing = False
+                        next_tkn()
+                    else:
+                        if curr_tkn is None:
+                            raise Exception('Unterminated Group')
+                        else:
+                            raise Exception(f'Invalid group: \'{LeftParenthesis()}{QuestionMark()}{curr_tkn.char}\'')
+                res = parse_re_seq(capturing=capturing)
                 if isinstance(curr_tkn, RightParenthesis):
                     # next_tkn() not needed (the parse_group while loop will eat the parenthesis)
                     return res
