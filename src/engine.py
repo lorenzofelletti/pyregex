@@ -1,4 +1,6 @@
+from typing import Callable
 from .pyrser import Pyrser
+from .match import Match
 from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement, EndElement, StartElement
 
 
@@ -6,10 +8,52 @@ class RegexEngine:
     def __init__(self):
         self.parser = Pyrser()
 
-    def match(self, re: str, string: str):
+    def match(self, re: str, string: str, return_matches=False, continue_after_match=False):
+        def return_fnc(res: bool, str_i: int, all_matches: list, return_matches: bool):
+            if return_matches:
+                return res, str_i, all_matches
+            else:
+                return res, str_i
+
+        all_matches = []
+        string_consumed_idx = 0
+
+        res, str_i, matches = self.__match__(re, string, True)
+        if res:
+            string_consumed_idx += str_i
+            all_matches.append(matches)
+        else:
+            return return_fnc(res, string_consumed_idx, all_matches, return_matches)
+
+        if not continue_after_match:
+            return return_fnc(res, string_consumed_idx, all_matches, return_matches)
+
+        while True:
+            string = string[str_i:]
+            if not len(string) > 0:
+                return return_fnc(res, string_consumed_idx, all_matches, return_matches)
+            res, str_i, matches = self.__match__(re, string, True)
+            if res:
+                string_consumed_idx += str_i
+                all_matches.append(matches)
+            else:
+                return return_fnc(True, string_consumed_idx, all_matches, return_matches)
+
+    def __match__(self, re: str, string: str, return_matches=False):
+        """
+        Same as match, but always returns after the first match.
+        """
         ast = self.parser.parse(re=re)
+        matches = []
 
         str_i = 0  # matched string chars so far
+
+        def return_fnc(res: bool, str_i: int):
+            nonlocal return_matches, matches
+            if return_matches:
+                return res, str_i, matches
+            else:
+                return res, str_i
 
         def backtrack(backtrack_stack: list, str_i, curr_i):
             '''
@@ -41,6 +85,23 @@ class RegexEngine:
                     backtrack_stack.append(
                         (node_i, min_, matched_times - 1, consumed_list))
                     return True, new_str_i, curr_i
+
+        def save_matches(match_group: Callable, ast: ASTNode, string: str, start_idx: int):
+            nonlocal matches
+
+            res, end_idx = match_group(ast, string)
+
+            if ast.is_capturing() and res == True:
+                already_matched = False
+                for match in matches:
+                    if match.group_id == ast.id:
+                        match = Match(ast.id, start_idx, end_idx, string)
+                        already_matched = True
+                        break
+                if not already_matched:
+                    matches.append(Match(ast.id, start_idx, end_idx, string))
+
+            return res, end_idx
 
         def match_group(ast: ASTNode, string: str):
             '''
@@ -113,8 +174,10 @@ class RegexEngine:
                     while j < max_:
                         tmp_str_i = str_i
 
-                        res, new_str_i = match_group(
-                            ast=curr_tkn, string=string)
+                        # res, new_str_i = match_group(
+                        #    ast=curr_tkn, string=string)
+                        res, new_str_i = save_matches(
+                            match_group, curr_tkn, string, str_i)
                         if res == True:
                             # yes! Come on!
                             # i must use the before_str_i because str_i is changed by the match_group
@@ -218,13 +281,17 @@ class RegexEngine:
         _ = 0
 
         if len(string) == 0:
-            return match_group(ast=ast, string=string)
+            res, consumed = save_matches(
+                match_group=match_group, ast=ast, string=string, start_idx=0)
+            return return_fnc(res, consumed)
 
         while str_i < len(string):
-            res, _ = match_group(ast=ast, string=string)
+            res, _ = save_matches(match_group=match_group,
+                                  ast=ast, string=string, start_idx=str_i)
+            i += 1
             if res:
-                return True, str_i
+                matches.reverse()
+                return return_fnc(True, str_i)
             else:
                 str_i = i
-            i += 1
-        return False, _
+        return return_fnc(False, _)

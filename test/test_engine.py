@@ -167,8 +167,60 @@ def test_match_space(reng):
     res, _ = reng.match(r'\s', '\v')
     assert res == True
 
+
 def test_match_space_2(reng):
     res, _ = reng.match(r'\s+', '\r\t\n \f \v')
     assert res == True
     res, _ = reng.match(r'^\s$', '\r\t')
     assert res == False
+
+
+def test_return_matches_simple(reng):
+    res, _, matches = reng.match(r'a\s', r'a ', return_matches=True)
+    assert res == True
+    assert len(matches[0]) == 1
+
+
+def test_return_matches_two(reng):
+    res, _m, matches = reng.match(r'a(b)+a', r'abba', return_matches=True)
+    assert res == True
+    assert len(matches[0]) == 2
+
+
+def test_non_capturing_group(reng):
+    res, _, matches = reng.match(r'a(?:b)+a', r'abba', return_matches=True)
+    assert res == True
+    assert len(matches[0]) == 1
+
+
+def test_continue_after_match_and_return_matches_simple(reng):
+    string = 'abba'
+    res, consumed, matches = reng.match(
+        r'a', string, continue_after_match=True, return_matches=True)
+    assert consumed == len(string)
+    assert len(matches) == 2
+    assert len(matches[0]) == 1
+    x = matches[0]
+    assert matches[0][0].match == 'a'
+    assert len(matches[1]) == 1
+    assert matches[1][0].match == 'a'
+
+
+def test_continue_after_match_and_return_matches_2(reng):
+    string = 'abbai'
+    res, consumed, matches = reng.match(
+        r'a', string, continue_after_match=True, return_matches=True)
+    assert consumed == len(string)-1
+    assert len(matches) == 2
+    assert len(matches[0]) == 1
+    x = matches[0]
+    assert matches[0][0].match == 'a'
+    assert len(matches[1]) == 1
+    assert matches[1][0].match == 'a'
+
+
+def test_question_mark(reng):
+    res, _ = reng.match(r'https?://', r'http://')
+    assert res == True
+    res, _ = reng.match(r'https?://', r'https://')
+    assert res == True
