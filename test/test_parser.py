@@ -51,7 +51,7 @@ def test_parse_match_start_end(parser):
 
 
 def test_complex_regex(parser):
-    ast = parser.parse('^[a-z|A-Z]{1,20}@[a-z|A-Z]\.[a-z]{1,3}$')
+    ast = parser.parse('^[a-zA-Z]{1,20}@[a-zA-Z]\.[a-z]{1,3}$')
     assert len(ast.child.children) == 7
 
     assert type(ast.child.children[0]) is StartElement
@@ -77,3 +77,35 @@ def test_space_element(parser):
     ast = parser.parse('\s')
     assert len(ast.child.children) == 1
     assert type(ast.child.children[0]) is SpaceElement
+
+
+def test_range_1(parser):
+    ast = parser.parse('[^a-z]')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is RangeElement
+    assert ast.child.children[0].is_match('a') == False
+
+
+def test_range_2(parser):
+    ast = parser.parse(r'[^a-z-\s-]')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is RangeElement
+    assert ast.child.children[0].is_match('a') == False
+    assert ast.child.children[0].is_match('-') == False
+    ast.child.children[0].is_match(' ') == False
+
+
+def test_range_3(parser):
+    ast = parser.parse(r'[a-z-\s-]')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is RangeElement
+    assert ast.child.children[0].is_match('a') == True
+    assert ast.child.children[0].is_match('-') == True
+    ast.child.children[0].is_match(' ') == True
+
+
+def test_range_2(parser):
+    ast = parser.parse(r'[\]]')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is RangeElement
+    assert ast.child.children[0].is_match(']') == True

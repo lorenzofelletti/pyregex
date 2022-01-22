@@ -101,15 +101,17 @@ class RangeElement(LeafNode):
     that is that it matches with more than one character.
     """
 
-    def __init__(self, match_str: str):
+    def __init__(self, match_str: str, is_positive_logic=True):
         super().__init__()
         self.type = 'rangeElement'
         self.match = match_str
         self.min = 1
         self.max = 1
+        self.is_positive_logic = is_positive_logic
 
     def is_match(self, ch: str):
-        return self.match.find(ch)
+        # XNOR of whether the ch is found and the logic (positive/negative)
+        return not(bool(self.match.find(ch)+1) ^ bool(self.is_positive_logic))
 
 
 class StartElement(LeafNode):

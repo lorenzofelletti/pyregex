@@ -1,3 +1,6 @@
+import string
+
+
 class Token:
     pass
 
@@ -22,7 +25,7 @@ class SpaceToken(Token):
         super().__init__()
         self.type = 'space'
         self.space_char = space_ch
-        self.char = space_ch
+        self.char = string.whitespace
 
 
 class Wildcard(WildcardToken):

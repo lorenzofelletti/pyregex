@@ -1,8 +1,8 @@
+from curses import nonl
 import numpy as np
 from .lexer import Lexer
 from .tokens import *
 from .re_ast import *
-# np.inf infinite representations
 
 
 class Pyrser:
@@ -33,14 +33,23 @@ class Pyrser:
         INNER_EL ::= EL+ | EL '-' EL ('|' INNER_EL)
         SPECIAL ::= '(' | ')' | '+' | '{' | '[' | '|' | '.' | '^' | '$' | ...
         """
-        alphabet_characters = 'abcdefghijklmnopqrstuvwxyz'
-        digit_characters = '0123456789'
+        #lower_alphabet_characters = 'abcdefghijklmnopqrstuvwxyz'
+        #upper_alphabet_characters = lower_alphabet_characters.upper()
+        #digit_characters = '0123456789'
 
-        def get_range_str(original_str, idx1, idx2, negate):
-            if not negate:
-                return original_str[idx1:idx2+1]
-            else:
-                return original_str[:idx1] + original_str[idx2+1:]
+        def get_range_str(start: str, end: str):
+            result = ''
+            i = ord(start)
+            while i <= ord(end):
+                result += chr(i)
+                i += 1
+            return result
+
+        # def get_range_str(original_str, idx1, idx2):
+            # if not negate:
+        #    return original_str[idx1:idx2+1]
+            # else:
+            #    return original_str[:idx1] + original_str[idx2+1:]
 
         def next_tkn_initializer(re):
             tokens = self.lxr.scan(re=re)
@@ -166,77 +175,73 @@ class Pyrser:
                     return element
                 else:
                     raise Exception(
-                        'Missing closing \']\'. Correct the regex and try again.')
+                        'Missing closing \']\'. Check the regex and try again.')
             else:
                 return parse_el()
 
         def parse_inner_el():
+            nonlocal curr_tkn
             # innerel creates a single RangeElement with all the matches
             match_str = ''
             if curr_tkn is None:
-                raise Exception("Missing ']'. Check the regex and try again.")
+                raise Exception(
+                    "Missing closing ']'. Check the regex and try again.")
 
-            tkn1 = None
-            tkn2 = None
-            while curr_tkn is not None and not isinstance(curr_tkn, RightBracket):
-                negate = False
+            positive_logic = True
+            if isinstance(curr_tkn, NotToken):
+                positive_logic = False
+                next_tkn()
 
-                tkn1 = curr_tkn
+            prev_char = None
+            while curr_tkn is not None:
+                if isinstance(curr_tkn, RightBracket):
+                    break
 
-                if isinstance(curr_tkn, OrToken):
-                    tkn1 = None
+                if isinstance(curr_tkn, SpaceToken):
+                    match_str += curr_tkn.char
                     next_tkn()
                     continue
 
-                if isinstance(curr_tkn, NotToken):
-                    negate = True
-                    next_tkn()
-                    tkn1 = curr_tkn
+                # every character inside it must be treated as an element
+                if not isinstance(curr_tkn, ElementToken):
+                    curr_tkn = ElementToken(char=curr_tkn.char)
 
-                if isinstance(tkn1, ElementToken):
-                    next_tkn()
-                    tkn2 = curr_tkn
-                    if isinstance(tkn2, RightBracket):
-                        break
-                    elif isinstance(tkn2, ElementToken):
-                        match_str += tkn1.char + tkn2.char
-                    elif isinstance(tkn2, Dash):
-                        next_tkn()
-                        tkn2 = curr_tkn
-                        if not isinstance(tkn2, ElementToken):
+                if next_tkn(without_consuming=True) is None:
+                    raise Exception(
+                        "Missing closing ']'. Check the regex and try again.")
+                elif isinstance(next_tkn(without_consuming=True), Dash):
+                    # it may be a range (like a-z, A-M, 0-9, ...)
+                    prev_char = curr_tkn.char
+                    next_tkn()  # current token is now the Dash
+                    if isinstance(next_tkn(without_consuming=True), RightBracket) or isinstance(next_tkn(without_consuming=True), SpaceToken):
+                        # we're in one of these scenarios: "<char>-]" "<char>-\s"
+                        # the dash and previous character must be interpreted as single elements
+                        match_str += prev_char + curr_tkn.char
+                    else:
+                        # we're in the case of an actual range (or next_tkn is none)
+                        next_tkn()  # curr_tkn is now the one after the dash
+                        if next_tkn is None:
                             raise Exception(
-                                'Expected a character token, instead got a {:s}'.format(type(tkn2)))
-
-                        if alphabet_characters.lower().find(tkn1.char) > -1 and \
-                                alphabet_characters.lower().find(tkn2.char) > -1:
-                            idx1 = alphabet_characters.lower().find(tkn1.char)
-                            idx2 = alphabet_characters.lower().find(tkn2.char)
-                            match_str += get_range_str(
-                                alphabet_characters.lower(), idx1, idx2, negate)
-                        elif alphabet_characters.upper().find(tkn1.char) > -1 and \
-                                alphabet_characters.upper().find(tkn2.char) > -1:
-                            idx1 = alphabet_characters.upper().find(tkn1.char)
-                            idx2 = alphabet_characters.upper().find(tkn2.char)
-                            match_str += get_range_str(
-                                alphabet_characters.upper(), idx1, idx2, negate)
-                        elif digit_characters.find(tkn1.char) > -1 and \
-                                digit_characters.find(tkn2.char) > -1:
-                            idx1 = digit_characters.find(tkn1.char)
-                            idx2 = digit_characters.find(tkn2.char)
-                            match_str += get_range_str(digit_characters,
-                                                       idx1, idx2, negate)
+                                "Missing closing ']'. Check the regex and try again.")
+                        elif ord(prev_char) > ord(curr_tkn.char):
+                            raise Exception(
+                                f"Range values reversed. Start '{prev_char}' char code is greater than end '{curr_tkn.char}' char code.")
                         else:
-                            raise Exception(
-                                'Unable to parse the range {}-{}'.format(tkn1.char, tkn2.char))
-
+                            match_str += get_range_str(prev_char,
+                                                       curr_tkn.char)
+                else:
+                    # no range, no missing ']', just a char to add to match_str
+                    match_str += curr_tkn.char
                 next_tkn()
-                tkn1 = None
-                tkn2 = None
 
-            if isinstance(tkn1, ElementToken):
-                match_str += tkn1.char
+            if curr_tkn is None:
+                # there was an error (missing ']')
+                raise Exception(
+                    "Missing closing ']'. Check the regex and try again.")
 
-            return RangeElement(match_str="".join(sorted(set(match_str))))
+            # curr_tkn is RightBracket
+
+            return RangeElement(match_str="".join(sorted(set(match_str))), is_positive_logic=positive_logic)
 
         def parse_el():
             if isinstance(curr_tkn, ElementToken):
