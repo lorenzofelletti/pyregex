@@ -194,11 +194,33 @@ def test_non_capturing_group(reng):
 
 
 def test_continue_after_match_and_return_matches_simple(reng):
-    res, _, matches = reng.match(
-        r'a', 'abba', continue_after_match=True, return_matches=True)
+    string = 'abba'
+    res, consumed, matches = reng.match(
+        r'a', string, continue_after_match=True, return_matches=True)
+    assert consumed == len(string)
     assert len(matches) == 2
     assert len(matches[0]) == 1
     x = matches[0]
     assert matches[0][0].match == 'a'
     assert len(matches[1]) == 1
     assert matches[1][0].match == 'a'
+
+
+def test_continue_after_match_and_return_matches_2(reng):
+    string = 'abbai'
+    res, consumed, matches = reng.match(
+        r'a', string, continue_after_match=True, return_matches=True)
+    assert consumed == len(string)-1
+    assert len(matches) == 2
+    assert len(matches[0]) == 1
+    x = matches[0]
+    assert matches[0][0].match == 'a'
+    assert len(matches[1]) == 1
+    assert matches[1][0].match == 'a'
+
+
+def test_question_mark(reng):
+    res, _ = reng.match(r'https?://', r'http://')
+    assert res == True
+    res, _ = reng.match(r'https?://', r'https://')
+    assert res == True

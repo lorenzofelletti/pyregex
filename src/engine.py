@@ -1,7 +1,4 @@
-from pydoc import doc
 from typing import Callable
-
-from numpy import append
 from .pyrser import Pyrser
 from .match import Match
 from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement, EndElement, StartElement
@@ -19,21 +16,28 @@ class RegexEngine:
                 return res, str_i
 
         all_matches = []
+        string_consumed_idx = 0
 
         res, str_i, matches = self.__match__(re, string, True)
         if res:
+            string_consumed_idx += str_i
             all_matches.append(matches)
+        else:
+            return return_fnc(res, string_consumed_idx, all_matches, return_matches)
 
         if not continue_after_match:
-            return return_fnc(res, str_i, all_matches, return_matches)
+            return return_fnc(res, string_consumed_idx, all_matches, return_matches)
 
         while True:
             string = string[str_i:]
             if not len(string) > 0:
-                return return_fnc(res, str_i, all_matches, return_matches)
+                return return_fnc(res, string_consumed_idx, all_matches, return_matches)
             res, str_i, matches = self.__match__(re, string, True)
             if res:
+                string_consumed_idx += str_i
                 all_matches.append(matches)
+            else:
+                return return_fnc(True, string_consumed_idx, all_matches, return_matches)
 
     def __match__(self, re: str, string: str, return_matches=False):
         """
@@ -236,6 +240,8 @@ class RegexEngine:
                                 consumed_list.append(1)
                                 str_i += 1
                             else:
+                                if min_ <= j:  # I already met the minimum requirement for match
+                                    break
                                 can_bt, bt_str_i, bt_i = backtrack(
                                     backtrack_stack, before_str_i, i)
                                 if can_bt:
