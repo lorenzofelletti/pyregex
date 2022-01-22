@@ -1,4 +1,3 @@
-from curses import nonl
 import numpy as np
 from .lexer import Lexer
 from .tokens import *
