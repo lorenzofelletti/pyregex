@@ -12,7 +12,7 @@ class Pyrser:
     a
     (a)
     a|b
-    ^a[^0-3|b-z|^cd]|BBBA{3,4}$
+    ^a[^0-3b-xz]|BBBA{3,4}$
     ^\?.*VR|46.+e?$
     """
 
@@ -25,11 +25,11 @@ class Pyrser:
         RE ::= RE_SEQ
         RE_SEQ ::= '^'? GROUP '$'? ('|' RE_SEQ)?
         GROUP ::= (RANGE_EL QTIFIER?)+
-        RANGE_EL ::= EL | '[' INNER_EL ']'
+        RANGE_EL ::= EL | '[' '^'? INNER_EL ']'
         EL ::= '\\'? (ch | SPECIAL) | '(' ('?:')? RE_SEQ ')'
 
         QTIFIER ::= '*' | '+' | '?' | '{' (num)? ',' num '}' | '{' num '}'
-        INNER_EL ::= EL+ | EL '-' EL ('|' INNER_EL)
+        INNER_EL ::= ch+ | ch '-' ch INNER_EL
         SPECIAL ::= '(' | ')' | '+' | '{' | '[' | '|' | '.' | '^' | '$' | ...
         """
         #lower_alphabet_characters = 'abcdefghijklmnopqrstuvwxyz'
