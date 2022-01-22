@@ -177,6 +177,8 @@ class RegexEngine:
                                 consumed_list.append(1)
                                 str_i += 1
                             else:
+                                if min_ <= j:  # I already met the minimum requirement for match
+                                    break
                                 can_bt, bt_str_i, bt_i = backtrack(
                                     backtrack_stack, before_str_i, i)
                                 if can_bt:
