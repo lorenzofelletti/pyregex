@@ -258,7 +258,8 @@ class Pyrser:
                         if curr_tkn is None:
                             raise Exception('Unterminated Group')
                         else:
-                            raise Exception(f'Invalid group: \'{LeftParenthesis()}{QuestionMark()}{curr_tkn.char}\'')
+                            raise Exception(
+                                f'Invalid group: \'{LeftParenthesis()}{QuestionMark()}{curr_tkn.char}\'')
                 res = parse_re_seq(capturing=capturing)
                 if isinstance(curr_tkn, RightParenthesis):
                     # next_tkn() not needed (the parse_group while loop will eat the parenthesis)
