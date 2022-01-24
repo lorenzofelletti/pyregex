@@ -11,11 +11,11 @@ class Lexer:
         return self.__digits__.find(ch) > -1
 
     def scan(self, re: str):
-        tokens = np.array([])
+        tokens = []
 
         def append(elem: Token):
             nonlocal tokens
-            tokens = np.append(tokens, elem)
+            tokens.append(elem)
 
         i = 0
         escape_found = False
