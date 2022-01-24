@@ -1,4 +1,3 @@
-import pytest
 from ..src.tokens import Asterisk, Bracket, Circumflex, Comma, CurlyBrace, Dash, ElementToken, End, EndToken, Escape, LeftBracket, LeftCurlyBrace, LeftParenthesis, NotToken, OneOrMore, OrToken, Parenthesis, Plus, Quantifier, QuestionMark, RightBracket, RightCurlyBrace, RightParenthesis, SpaceToken, Start, StartToken, Token, VerticalBar, Wildcard, WildcardToken, ZeroOrMore, ZeroOrOne
 
 
@@ -20,3 +19,8 @@ def test_NotToken():
     assert nt.type == 'not'
     assert nt.not_ch == '^'
     assert nt.char == nt.not_ch
+
+
+def test_Bracket():
+    br = Bracket("L")
+    assert br is not None

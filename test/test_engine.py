@@ -224,3 +224,26 @@ def test_question_mark(reng):
     assert res == True
     res, _ = reng.match(r'https?://', r'https://')
     assert res == True
+
+
+def test_engine_1(reng):
+    with pytest.raises(Exception):
+        res, _ = reng.match("$^", '')
+
+
+def test_engine_2(reng):
+    mail = "lorenzo.felletti@mail.com"
+    res, consumed = reng.match(
+        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    assert res == True
+    assert consumed == len(mail)
+
+    mail = "lorenzo.felletti@mail.c"
+    res, _ = reng.match(
+        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    assert res == False
+
+    mail = "lorenzo.fellettimail.com"
+    res, _ = reng.match(
+        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    assert res == False

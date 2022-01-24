@@ -31,7 +31,7 @@ def test_grouping(parser):
 
 
 def test_curly_braces_1(parser):
-    ast = parser.parse('a{5}b')
+    ast = parser.parse(r'a{5}b')
     assert len(ast.child.children) == 2
 
 
@@ -109,3 +109,21 @@ def test_range_2(parser):
     assert len(ast.child.children) == 1
     assert type(ast.child.children[0]) is RangeElement
     assert ast.child.children[0].is_match(']') == True
+
+
+def test_parse_curly_1(parser):
+    ast = parser.parse(r'a{2}')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is Element
+    assert ast.child.children[0].is_match('a') == True
+    assert ast.child.children[0].min == 2
+    ast.child.children[0].max == 2
+
+
+def test_parse_curly_2(parser):
+    ast = parser.parse(r'a{,2}')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is Element
+    assert ast.child.children[0].is_match('a') == True
+    assert ast.child.children[0].min == 0
+    ast.child.children[0].max == 2
