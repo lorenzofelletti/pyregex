@@ -247,3 +247,36 @@ def test_engine_2(reng):
     res, _ = reng.match(
         r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
     assert res == False
+
+
+def test_engine_3(reng):
+    string = "lorem ipsum"
+    res, consumed = reng.match(r"m", string, continue_after_match=True)
+    assert res == True
+    assert consumed == len(string)
+
+
+def test_engine_4(reng):
+    string = "lorem ipsum"
+    res, consumed, matches = reng.match(
+        r"m", string, continue_after_match=True, return_matches=True)
+    assert res == True
+    assert consumed == len(string)
+
+    assert len(matches) == 2
+    assert matches[0][0].match == 'm'
+    assert matches[1][0].match == 'm'
+
+
+def test_engine_5(reng):
+    match_1 = "lor.fel@ah.ha"
+    match_2 = "fel.log@ha.ah"
+    string = match_1 + " " + match_2
+    res, consumed, matches = reng.match(
+        r"[a-z.]+@[a-z]+\.[a-z]{2}", string, continue_after_match=True, return_matches=True)
+    assert res == True
+    assert consumed == len(string)
+
+    assert len(matches) == 2
+    assert matches[0][0].match == match_1
+    assert matches[1][0].match == match_2
