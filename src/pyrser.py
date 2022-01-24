@@ -140,7 +140,10 @@ class Pyrser:
                 while isinstance(curr_tkn, ElementToken):
                     val_1 += curr_tkn.char
                     next_tkn()
-                val_1 = int(val_1)
+                if val_1 == '':
+                    val_1 == 0
+                else:
+                    val_1 = int(val_1)
 
                 if isinstance(curr_tkn, RightCurlyBrace):
                     # I'm in the case {exact}
@@ -155,7 +158,10 @@ class Pyrser:
                 while isinstance(curr_tkn, ElementToken):
                     val_2 += curr_tkn.char
                     next_tkn()
-                val_2 = int(val_2)
+                if val_2 == '':
+                    val_2 == np.inf
+                else:
+                    val_2 = int(val_2)
 
                 # skip the closing brace
                 next_tkn()
