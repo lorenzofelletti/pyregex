@@ -8,7 +8,7 @@ class RegexEngine:
     def __init__(self):
         self.parser = Pyrser()
 
-    def match(self, re: str, string: str, return_matches=False, continue_after_match=False):
+    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False):
         def return_fnc(res: bool, str_i: int, all_matches: list, return_matches: bool):
             if return_matches:
                 return res, str_i, all_matches
@@ -39,7 +39,7 @@ class RegexEngine:
             else:
                 return return_fnc(True, string_consumed_idx, all_matches, return_matches)
 
-    def __match__(self, re: str, string: str, return_matches=False):
+    def __match__(self, re: str, string: str, return_matches: bool = False):
         """
         Same as match, but always returns after the first match.
         """
@@ -55,7 +55,7 @@ class RegexEngine:
             else:
                 return res, str_i
 
-        def backtrack(backtrack_stack: list, str_i, curr_i):
+        def backtrack(backtrack_stack: list, str_i: int, curr_i: int):
             '''
             Retun a tuple: 
              - bool: can/can't I backtrack
@@ -114,20 +114,20 @@ class RegexEngine:
             '''
             nonlocal str_i
             backtrack_stack = []
-            # curr_tkn here is always a group or ornode
+            # curr_node here is always a group or ornode
             # because recursion occur only w/ OrNode,
             # which
-            curr_tkn = ast.children[0]
+            curr_node = ast.children[0]
             i = 0  # the children i'm iterating, not to confuse with str_i
 
             # the passed ast can't be a Leaf
             while i < len(ast.children):
-                curr_tkn = ast.children[i]
+                curr_node = ast.children[i]
 
                 # if is OrNode I evaluate the sub-groups with a recursive call
-                if isinstance(curr_tkn, OrNode):
+                if isinstance(curr_node, OrNode):
                     before_str_i = str_i
-                    min_, max_ = curr_tkn.min, curr_tkn.max
+                    min_, max_ = curr_node.min, curr_node.max
                     j = 0
                     consumed_list = []
 
@@ -135,13 +135,13 @@ class RegexEngine:
                     while j < max_:
                         tmp_str_i = str_i
                         res, new_str_i = match_group(
-                            ast=curr_tkn.left, string=string)
+                            ast=curr_node.left, string=string)
                         if res == True:
                             pass
                         else:
                             str_i = tmp_str_i
                             res, new_str_i = match_group(
-                                ast=curr_tkn.right, string=string)
+                                ast=curr_node.right, string=string)
 
                         if res == True:
                             consumed_list.append(new_str_i - tmp_str_i)
@@ -164,8 +164,8 @@ class RegexEngine:
                         i += 1
                     continue
 
-                elif isinstance(curr_tkn, GroupNode):
-                    min_, max_ = curr_tkn.min, curr_tkn.max
+                elif isinstance(curr_node, GroupNode):
+                    min_, max_ = curr_node.min, curr_node.max
                     j = 0
                     consumed_list = []
                     before_str_i = str_i
@@ -175,9 +175,9 @@ class RegexEngine:
                         tmp_str_i = str_i
 
                         # res, new_str_i = match_group(
-                        #    ast=curr_tkn, string=string)
+                        #    ast=curr_node, string=string)
                         res, new_str_i = save_matches(
-                            match_group, curr_tkn, string, str_i)
+                            match_group, curr_node, string, str_i)
                         if res == True:
                             # yes! Come on!
                             # i must use the before_str_i because str_i is changed by the match_group
@@ -209,24 +209,9 @@ class RegexEngine:
 
                     continue
 
-                elif type(curr_tkn) is StartElement or type(curr_tkn) is EndElement:
-                    if type(curr_tkn) is StartElement and str_i == 0:
-                        i += 1
-                    elif type(curr_tkn) is EndElement and str_i == len(string):
-                        i += 1
-                    else:
-                        can_bt, bt_str_i, bt_i = backtrack(
-                            backtrack_stack, str_i, i)
-                        if can_bt:
-                            i = bt_i
-                            str_i = bt_str_i
-                        else:
-                            return False, str_i
-                    continue
-
-                elif isinstance(curr_tkn, LeafNode):
+                elif isinstance(curr_node, LeafNode):
                     # it is a LeafNode obviously now
-                    min_, max_ = curr_tkn.min, curr_tkn.max
+                    min_, max_ = curr_node.min, curr_node.max
                     j = 0
 
                     consumed_list = []
@@ -236,9 +221,10 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         if str_i < len(string):  # i still have input to match
-                            if curr_tkn.is_match(ch=string[str_i]):
-                                consumed_list.append(1)
-                                str_i += 1
+                            if curr_node.is_match(ch=string[str_i], str_i=str_i, str_len=len(string)):
+                                if not (isinstance(curr_node, StartElement) or isinstance(curr_node, EndElement)):
+                                    consumed_list.append(1)
+                                    str_i += 1
                             else:
                                 if min_ <= j:  # I already met the minimum requirement for match
                                     break
@@ -252,8 +238,10 @@ class RegexEngine:
                                 else:
                                     return False, str_i
                         else:  # finished input
+                            if isinstance(curr_node, StartElement) or isinstance(curr_node, EndElement) and curr_node.is_match(str_i=str_i, str_len=len(string)):
+                                pass
                             # finished input w/o finishing the regex tree
-                            if min_ <= j:
+                            elif min_ <= j:
                                 break
                             else:
                                 # i have more states, but the input is finished

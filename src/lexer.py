@@ -7,13 +7,13 @@ class Lexer:
         self.__digits__ = '0123456789'
         pass
 
-    def __is_digit__(self, ch):
+    def __is_digit__(self, ch: str):
         return self.__digits__.find(ch) > -1
 
     def scan(self, re: str):
         tokens = np.array([])
 
-        def append(elem):
+        def append(elem: Token):
             nonlocal tokens
             tokens = np.append(tokens, elem)
 

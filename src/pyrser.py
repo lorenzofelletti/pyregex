@@ -19,7 +19,7 @@ class Pyrser:
     def __init__(self):
         self.lxr = Lexer()
 
-    def parse(self, re):
+    def parse(self, re: str):
         """
         REGEX GRAMMAR recognized:
         RE ::= RE_SEQ
@@ -50,12 +50,12 @@ class Pyrser:
             # else:
             #    return original_str[:idx1] + original_str[idx2+1:]
 
-        def next_tkn_initializer(re):
+        def next_tkn_initializer(re: str):
             tokens = self.lxr.scan(re=re)
 
             i = -1
 
-            def next_tkn(without_consuming=False):
+            def next_tkn(without_consuming: bool = False):
                 nonlocal i
                 nonlocal tokens
                 nonlocal curr_tkn
@@ -74,7 +74,7 @@ class Pyrser:
         def parse_re():
             return RE(parse_re_seq())
 
-        def parse_re_seq(capturing=True):
+        def parse_re_seq(capturing: bool = True):
             match_start, match_end = False, False
             if type(curr_tkn) is Start or type(curr_tkn) is Circumflex:
                 next_tkn()
@@ -99,7 +99,7 @@ class Pyrser:
 
             return node
 
-        def parse_group(capturing=True):
+        def parse_group(capturing: bool = True):
             elements = np.array([])  # holds the children of the GroupNode
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
@@ -130,7 +130,7 @@ class Pyrser:
 
             return GroupNode(children=elements, capturing=capturing)
 
-        def parse_curly(new_el):
+        def parse_curly(new_el: ASTNode):
             # move past the left brace
             next_tkn()
 

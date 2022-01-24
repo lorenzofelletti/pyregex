@@ -6,14 +6,14 @@ class Token:
 
 
 class ElementToken(Token):
-    def __init__(self, char):
+    def __init__(self, char: str):
         super().__init__()
         self.type = 'element'
         self.char = char
 
 
 class WildcardToken(Token):
-    def __init__(self, wildcard_ch):
+    def __init__(self, wildcard_ch: str):
         super().__init__()
         self.type = 'wildcard'
         self.wildcard_ch = wildcard_ch
@@ -21,7 +21,7 @@ class WildcardToken(Token):
 
 
 class SpaceToken(Token):
-    def __init__(self, space_ch) -> None:
+    def __init__(self, space_ch: str) -> None:
         super().__init__()
         self.type = 'space'
         self.space_char = space_ch
@@ -34,7 +34,7 @@ class Wildcard(WildcardToken):
 
 
 class StartToken(Token):
-    def __init__(self, start_ch):
+    def __init__(self, start_ch: str):
         super().__init__()
         self.type = 'start'
         self.start_ch = start_ch
@@ -47,7 +47,7 @@ class Start(StartToken):
 
 
 class EndToken(Token):
-    def __init__(self, end_ch):
+    def __init__(self, end_ch: str):
         super().__init__()
         self.type = 'end'
         self.end_ch = end_ch
@@ -75,7 +75,7 @@ class Comma(Token):
 
 
 class Parenthesis(Token):
-    def __init__(self, side):
+    def __init__(self, side: str):
         super().__init__()
         self.type = 'parenthesis'
         self.side = side
@@ -94,7 +94,7 @@ class RightParenthesis(Parenthesis):
 
 
 class CurlyBrace(Token):
-    def __init__(self, side):
+    def __init__(self, side: str):
         super().__init__()
         self.type = 'curly'
         self.side = side
@@ -113,7 +113,7 @@ class RightCurlyBrace(CurlyBrace):
 
 
 class Bracket(Token):
-    def __init__(self, side):
+    def __init__(self, side: str):
         super().__init__()
         self.type = 'bracket'
         self.side = side
@@ -132,7 +132,7 @@ class RightBracket(Bracket):
 
 
 class Quantifier(Token):
-    def __init__(self, quantity, qtifier_char):
+    def __init__(self, quantity: int, qtifier_char: str):
         super().__init__()
         self.type = 'qtifier'
         self.quantity = quantity
@@ -141,17 +141,17 @@ class Quantifier(Token):
 
 
 class ZeroOrMore(Quantifier):
-    def __init__(self, qtifier_char):
+    def __init__(self, qtifier_char: str):
         super().__init__(quantity='zeroOrMore', qtifier_char=qtifier_char)
 
 
 class OneOrMore(Quantifier):
-    def __init__(self, qtifier_char):
+    def __init__(self, qtifier_char: str):
         super().__init__(quantity='oneOrMore', qtifier_char=qtifier_char)
 
 
 class ZeroOrOne(Quantifier):
-    def __init__(self, qtifier_char):
+    def __init__(self, qtifier_char: str):
         super().__init__(quantity='zeroOrOne', qtifier_char=qtifier_char)
 
 
@@ -171,7 +171,7 @@ class QuestionMark(ZeroOrOne):
 
 
 class OrToken(Token):
-    def __init__(self, or_ch):
+    def __init__(self, or_ch: str):
         super().__init__()
         self.type = 'or'
         self.or_ch = or_ch
@@ -184,7 +184,7 @@ class VerticalBar(OrToken):
 
 
 class NotToken(Token):
-    def __init__(self, not_ch):
+    def __init__(self, not_ch: str):
         super().__init__()
         self.type = 'not'
         self.not_ch = not_ch
