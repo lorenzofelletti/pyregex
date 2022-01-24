@@ -239,7 +239,7 @@ class RegexEngine:
                                     return False, str_i
                         else:  # finished input
                             if isinstance(curr_node, StartElement) or isinstance(curr_node, EndElement) and curr_node.is_match(str_i=str_i, str_len=len(string)):
-                                j += 1
+                                pass
                             # finished input w/o finishing the regex tree
                             elif min_ <= j:
                                 break
