@@ -41,7 +41,7 @@ class LeafNode(ASTNode):
     def __init__(self):
         super().__init__()
 
-    def is_match(self, ch: str):
+    def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
         """
         Returns a tuple of if a match were found, and how many characters were matched.
         The parameters to be passed are:
@@ -63,7 +63,7 @@ class Element(LeafNode):
         self.min = 1
         self.max = 1
 
-    def is_match(self, ch: str):
+    def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
         return self.match == ch
 
 
@@ -77,7 +77,7 @@ class WildcardElement(Element):
         self.type = 'wildcard_element'
         self.match = True
 
-    def is_match(self, ch: str):
+    def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
         return ch != '\n'
 
 
@@ -91,7 +91,7 @@ class SpaceElement(Element):
         self.type = 'spaceElement'
         self.match = True
 
-    def is_match(self, ch: str):
+    def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
         return ch.isspace() and len(ch) == 1
 
 
@@ -109,7 +109,7 @@ class RangeElement(LeafNode):
         self.max = 1
         self.is_positive_logic = is_positive_logic
 
-    def is_match(self, ch: str):
+    def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
         # XNOR of whether the ch is found and the logic (positive/negative)
         return not(bool(self.match.find(ch)+1) ^ bool(self.is_positive_logic))
 
@@ -126,6 +126,9 @@ class StartElement(LeafNode):
         self.min = 1
         self.max = 1
 
+    def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
+        return str_i == 0
+
 
 class EndElement(LeafNode):
     """
@@ -138,6 +141,9 @@ class EndElement(LeafNode):
         self.match = 'len(string)'
         self.min = 1
         self.max = 1
+
+    def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
+        return str_i == str_len
 
 
 class OrNode(ASTNode):

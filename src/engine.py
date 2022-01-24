@@ -209,21 +209,6 @@ class RegexEngine:
 
                     continue
 
-                elif type(curr_node) is StartElement or type(curr_node) is EndElement:
-                    if type(curr_node) is StartElement and str_i == 0:
-                        i += 1
-                    elif type(curr_node) is EndElement and str_i == len(string):
-                        i += 1
-                    else:
-                        can_bt, bt_str_i, bt_i = backtrack(
-                            backtrack_stack, str_i, i)
-                        if can_bt:
-                            i = bt_i
-                            str_i = bt_str_i
-                        else:
-                            return False, str_i
-                    continue
-
                 elif isinstance(curr_node, LeafNode):
                     # it is a LeafNode obviously now
                     min_, max_ = curr_node.min, curr_node.max
@@ -236,9 +221,10 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         if str_i < len(string):  # i still have input to match
-                            if curr_node.is_match(ch=string[str_i]):
-                                consumed_list.append(1)
-                                str_i += 1
+                            if curr_node.is_match(ch=string[str_i], str_i=str_i, str_len=len(string)):
+                                if not (isinstance(curr_node, StartElement) or isinstance(curr_node, EndElement)):
+                                    consumed_list.append(1)
+                                    str_i += 1
                             else:
                                 if min_ <= j:  # I already met the minimum requirement for match
                                     break
@@ -252,8 +238,10 @@ class RegexEngine:
                                 else:
                                     return False, str_i
                         else:  # finished input
+                            if isinstance(curr_node, StartElement) or isinstance(curr_node, EndElement) and curr_node.is_match(str_i=str_i, str_len=len(string)):
+                                j += 1
                             # finished input w/o finishing the regex tree
-                            if min_ <= j:
+                            elif min_ <= j:
                                 break
                             else:
                                 # i have more states, but the input is finished
