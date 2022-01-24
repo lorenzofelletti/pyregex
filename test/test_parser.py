@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from ..src.re_ast import RE, EndElement, GroupNode, Element, RangeElement, SpaceElement, StartElement
 from ..src.pyrser import Pyrser
@@ -127,3 +128,21 @@ def test_parse_curly_2(parser):
     assert ast.child.children[0].is_match('a') == True
     assert ast.child.children[0].min == 0
     ast.child.children[0].max == 2
+
+
+def test_parse_curly_3(parser):
+    ast = parser.parse(r'a{2,}')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is Element
+    assert ast.child.children[0].is_match('a') == True
+    assert ast.child.children[0].min == 2
+    ast.child.children[0].max == np.inf
+
+
+def test_parse_curly_4(parser):
+    ast = parser.parse(r'a{,}')
+    assert len(ast.child.children) == 1
+    assert type(ast.child.children[0]) is Element
+    assert ast.child.children[0].is_match('a') == True
+    assert ast.child.children[0].min == 0
+    ast.child.children[0].max == np.inf
