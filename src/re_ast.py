@@ -21,7 +21,7 @@ class RE(ASTNode):
     AST class entry point for a regular expression's AST.
     """
 
-    def __init__(self, child):
+    def __init__(self, child: ASTNode):
         super().__init__()
         self.type = 're'
         # self.__capturing__ = True
@@ -101,7 +101,7 @@ class RangeElement(LeafNode):
     that is that it matches with more than one character.
     """
 
-    def __init__(self, match_str: str, is_positive_logic=True):
+    def __init__(self, match_str: str, is_positive_logic: bool = True):
         super().__init__()
         self.type = 'rangeElement'
         self.match = match_str
@@ -152,7 +152,7 @@ class OrNode(ASTNode):
     divides the regex into two possible matching paths.
     """
 
-    def __init__(self, left, right):
+    def __init__(self, left: ASTNode, right: ASTNode):
         super().__init__()
         self.type = 'orNode'
         self.left = left
@@ -168,7 +168,7 @@ class NotNode(ASTNode):
     Inherits from ASTNode and models the not-node behavior.
     """
 
-    def __init__(self, child):
+    def __init__(self, child: ASTNode):
         super().__init__()
         self.type = 'notNode'
         self.child = child
@@ -180,7 +180,7 @@ class GroupNode(ASTNode):
     Inherits from ASTNode and models the group in a regex.
     """
 
-    def __init__(self, children, capturing=False):
+    def __init__(self, children: "list[ASTNode]", capturing: bool = False):
         super().__init__()
         self.type = 'groupNode'
         self.__capturing__ = capturing

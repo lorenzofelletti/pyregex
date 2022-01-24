@@ -8,7 +8,7 @@ class RegexEngine:
     def __init__(self):
         self.parser = Pyrser()
 
-    def match(self, re: str, string: str, return_matches=False, continue_after_match=False):
+    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False):
         def return_fnc(res: bool, str_i: int, all_matches: list, return_matches: bool):
             if return_matches:
                 return res, str_i, all_matches
@@ -39,7 +39,7 @@ class RegexEngine:
             else:
                 return return_fnc(True, string_consumed_idx, all_matches, return_matches)
 
-    def __match__(self, re: str, string: str, return_matches=False):
+    def __match__(self, re: str, string: str, return_matches: bool = False):
         """
         Same as match, but always returns after the first match.
         """
@@ -55,7 +55,7 @@ class RegexEngine:
             else:
                 return res, str_i
 
-        def backtrack(backtrack_stack: list, str_i, curr_i):
+        def backtrack(backtrack_stack: list, str_i: int, curr_i: int):
             '''
             Retun a tuple: 
              - bool: can/can't I backtrack
