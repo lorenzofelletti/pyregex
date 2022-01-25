@@ -280,3 +280,12 @@ def test_engine_5(reng):
     assert len(matches) == 2
     assert matches[0][0].match == match_1
     assert matches[1][0].match == match_2
+
+
+def test_engine_6(reng):
+    res, consumed = reng.match(r'[\abc]', r'\\')
+    assert res == False
+    assert consumed == 0
+
+    res, _ = reng.match(r'[\\abc]', r'\\')
+    assert res == True

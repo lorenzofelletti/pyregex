@@ -52,7 +52,7 @@ def test_parse_match_start_end(parser):
 
 
 def test_complex_regex(parser):
-    ast = parser.parse('^[a-zA-Z]{1,20}@[a-zA-Z]\.[a-z]{1,3}$')
+    ast = parser.parse(r'^[a-zA-Z]{1,20}@[a-zA-Z]\.[a-z]{1,3}$')
     assert len(ast.child.children) == 7
 
     assert type(ast.child.children[0]) is StartElement
@@ -75,7 +75,7 @@ def test_complex_regex(parser):
 
 
 def test_space_element(parser):
-    ast = parser.parse('\s')
+    ast = parser.parse(r'\s')
     assert len(ast.child.children) == 1
     assert type(ast.child.children[0]) is SpaceElement
 
@@ -146,3 +146,23 @@ def test_parse_curly_4(parser):
     assert ast.child.children[0].is_match('a') == True
     assert ast.child.children[0].min == 0
     ast.child.children[0].max == np.inf
+
+
+def test_parse_fail_empty_curly(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'a{}')
+
+
+def test_fail_quatifier_unescaped(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'?')
+
+
+def test_parse_fail_missing_clising_bracket(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'a[abc')
+
+
+def test_parse_fail_unescaped_closing_bracket(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'abc]')
