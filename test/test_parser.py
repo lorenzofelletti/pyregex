@@ -166,3 +166,23 @@ def test_parse_fail_missing_clising_bracket(parser):
 def test_parse_fail_unescaped_closing_bracket(parser):
     with pytest.raises(Exception):
         ast = parser.parse(r'abc]')
+
+
+def test_parse_fail_unescaped_closing_parenthesis(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'a)')
+
+
+def test_parse_fail_unescaped_start(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'^^')
+
+
+def test_parse_fail_unescaped_end(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'$$')
+
+
+def test_parse_fail_swapped_range(parser):
+    with pytest.raises(Exception):
+        ast = parser.parse(r'[z-a]')

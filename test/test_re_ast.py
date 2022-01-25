@@ -35,6 +35,7 @@ def test_LeafNode():
     assert ln is not None
     assert hasattr(ln, 'is_match')
 
+    assert ln.is_match() == False
 
 def test_WildcardElement():
     we = WildcardElement()

@@ -289,3 +289,8 @@ def test_engine_6(reng):
 
     res, _ = reng.match(r'[\\abc]', r'\\')
     assert res == True
+
+
+def test_engine_7(reng):
+    res, _ = reng.match(r'(a)+(a)?(a{2}|b)+', 'aaabbaa')
+    assert res == True

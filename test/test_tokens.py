@@ -24,3 +24,8 @@ def test_NotToken():
 def test_Bracket():
     br = Bracket("L")
     assert br is not None
+
+
+def test_Escape():
+    escape = Escape()
+    assert escape is not None
