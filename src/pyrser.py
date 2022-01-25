@@ -239,13 +239,6 @@ class Pyrser:
                     match_str += curr_tkn.char
                 next_tkn()
 
-            if curr_tkn is None:
-                # there was an error (missing ']')
-                raise Exception(
-                    "Missing closing ']'. Check the regex and try again.")
-
-            # curr_tkn is RightBracket
-
             return RangeElement(match_str="".join(sorted(set(match_str))), is_positive_logic=positive_logic)
 
         def parse_el():

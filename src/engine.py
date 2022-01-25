@@ -18,7 +18,7 @@ class RegexEngine:
         all_matches = []
         string_consumed_idx = 0
 
-        res, str_i, matches = self.__match__(re, string, True)
+        res, str_i, matches = self.__match__(re, string)
         if res:
             string_consumed_idx += str_i
             all_matches.append(matches)
@@ -32,14 +32,14 @@ class RegexEngine:
             string = string[str_i:]
             if not len(string) > 0:
                 return return_fnc(res, string_consumed_idx, all_matches, return_matches)
-            res, str_i, matches = self.__match__(re, string, True)
+            res, str_i, matches = self.__match__(re, string)
             if res:
                 string_consumed_idx += str_i
                 all_matches.append(matches)
             else:
                 return return_fnc(True, string_consumed_idx, all_matches, return_matches)
 
-    def __match__(self, re: str, string: str, return_matches: bool = False):
+    def __match__(self, re: str, string: str):
         """
         Same as match, but always returns after the first match.
         """
@@ -49,11 +49,9 @@ class RegexEngine:
         str_i = 0  # matched string chars so far
 
         def return_fnc(res: bool, str_i: int):
-            nonlocal return_matches, matches
-            if return_matches:
-                return res, str_i, matches
-            else:
-                return res, str_i
+            nonlocal matches
+            matches.reverse()
+            return res, str_i, matches
 
         def backtrack(backtrack_stack: list, str_i: int, curr_i: int):
             '''
@@ -66,20 +64,13 @@ class RegexEngine:
 
             node_i, min_, matched_times, consumed_list = backtrack_stack.pop()
 
-            if node_i is None:
-                # the backtrack_stack is empty
-                return False, str_i, curr_i
-            elif matched_times == min_:
+            if matched_times == min_:
                 # calculate_the new correct str_i
                 for consumption in consumed_list:
                     str_i -= consumption
                 # recursive call
                 return backtrack(backtrack_stack, str_i, node_i)
             else:
-                if len(consumed_list) == 0:
-                    return False, str_i, curr_i
-
-                else:
                     last_consumed = consumed_list.pop()
                     new_str_i = str_i - last_consumed
                     backtrack_stack.append(
@@ -278,7 +269,6 @@ class RegexEngine:
                                   ast=ast, string=string, start_idx=str_i)
             i += 1
             if res:
-                matches.reverse()
                 return return_fnc(True, str_i)
             else:
                 str_i = i

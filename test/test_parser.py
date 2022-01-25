@@ -186,3 +186,19 @@ def test_parse_fail_unescaped_end(parser):
 def test_parse_fail_swapped_range(parser):
     with pytest.raises(Exception):
         ast = parser.parse(r'[z-a]')
+
+
+def test_parse_fail_non_capturing_group(parser):
+    with pytest.raises(Exception):
+        parser.parse(r'(?')
+
+    with pytest.raises(Exception):
+        parser.parse(r'(?aa')
+
+
+def test_parse_fail_non_closed_range(parser):
+    with pytest.raises(Exception):
+        parser.parse(r'[a')
+
+    with pytest.raises(Exception):
+        parser.parse(r'[')

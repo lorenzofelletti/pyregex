@@ -294,3 +294,11 @@ def test_engine_6(reng):
 def test_engine_7(reng):
     res, _ = reng.match(r'(a)+(a)?(a{2}|b)+', 'aaabbaa')
     assert res == True
+
+
+def test_engine_8(reng):
+    res, _ = reng.match(r'(a){2}', r'a')
+    assert res == False
+
+    res, _ = reng.match(r'(aa){1,2}', r'aa')
+    assert res == True
