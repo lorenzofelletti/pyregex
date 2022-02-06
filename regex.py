@@ -1,5 +1,5 @@
 import sys
-from time import perf_counter, perf_counter_ns
+from time import perf_counter_ns
 from src.engine import RegexEngine
 
 

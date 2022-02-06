@@ -71,11 +71,11 @@ class RegexEngine:
                 # recursive call
                 return backtrack(backtrack_stack, str_i, node_i)
             else:
-                    last_consumed = consumed_list.pop()
-                    new_str_i = str_i - last_consumed
-                    backtrack_stack.append(
-                        (node_i, min_, matched_times - 1, consumed_list))
-                    return True, new_str_i, curr_i
+                last_consumed = consumed_list.pop()
+                new_str_i = str_i - last_consumed
+                backtrack_stack.append(
+                    (node_i, min_, matched_times - 1, consumed_list))
+                return True, new_str_i, curr_i
 
         def save_matches(match_group: Callable, ast: ASTNode, string: str, start_idx: int):
             nonlocal matches
