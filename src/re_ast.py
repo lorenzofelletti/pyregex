@@ -111,7 +111,7 @@ class RangeElement(LeafNode):
 
     def is_match(self, ch: str = ' ', str_i: int = 0, str_len: int = 0):
         # XNOR of whether the ch is found and the logic (positive/negative)
-        return not(bool(self.match.find(ch)+1) ^ bool(self.is_positive_logic))
+        return not((ch in self.match) ^ self.is_positive_logic)
 
 
 class StartElement(LeafNode):
