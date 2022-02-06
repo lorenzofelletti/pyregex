@@ -76,13 +76,13 @@ class Pyrser:
         def parse_re():
             return RE(parse_re_seq())
 
-        def parse_re_seq(capturing: bool = True):
+        def parse_re_seq(capturing: bool = True, group_name: str = 'default'):
             match_start, match_end = False, False
             if type(curr_tkn) is Start or type(curr_tkn) is Circumflex:
                 next_tkn()
                 match_start = True
 
-            node = parse_group(capturing=capturing)
+            node = parse_group(capturing=capturing, group_name=group_name)
 
             if isinstance(curr_tkn, EndToken):
                 next_tkn()
@@ -101,7 +101,7 @@ class Pyrser:
 
             return node
 
-        def parse_group(capturing: bool = True):
+        def parse_group(capturing: bool = True, group_name: str = 'default'):
             elements = np.array([])  # holds the children of the GroupNode
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
@@ -130,7 +130,7 @@ class Pyrser:
                 elements = np.append(elements, new_el)
                 # next_tkn()
 
-            return GroupNode(children=elements, capturing=capturing)
+            return GroupNode(children=elements, capturing=capturing, group_name=group_name)
 
         def parse_curly(new_el: ASTNode):
             # move past the left brace
@@ -244,6 +244,7 @@ class Pyrser:
             return RangeElement(match_str="".join(sorted(set(match_str))), is_positive_logic=positive_logic)
 
         def parse_el():
+            group_name = None
             if isinstance(curr_tkn, ElementToken):
                 return Element(match_ch=curr_tkn.char)
             elif isinstance(curr_tkn, Wildcard):
@@ -256,16 +257,19 @@ class Pyrser:
                 capturing = True
                 if type(curr_tkn) is QuestionMark:
                     next_tkn()
-                    if type(curr_tkn) is ElementToken and curr_tkn.char == ':':
+                    if curr_tkn.char == ':':
                         capturing = False
                         next_tkn()
+                    elif curr_tkn.char == '<':
+                        next_tkn()
+                        group_name = parse_group_name()
                     else:
                         if curr_tkn is None:
-                            raise Exception('Unterminated Group')
+                            raise Exception('Unterminated group')
                         else:
                             raise Exception(
                                 f'Invalid group: \'{LeftParenthesis()}{QuestionMark()}{curr_tkn.char}\'')
-                res = parse_re_seq(capturing=capturing)
+                res = parse_re_seq(capturing=capturing, group_name=group_name)
                 if isinstance(curr_tkn, RightParenthesis):
                     # next_tkn() not needed (the parse_group while loop will eat the parenthesis)
                     return res
@@ -274,6 +278,20 @@ class Pyrser:
             else:
                 raise Exception(
                     'Unescaped special character {}'.format(curr_tkn.char))
+
+        def parse_group_name() -> str:
+            if curr_tkn is None:
+                raise Exception('Unterminated named group name.')
+            group_name = ''
+            while curr_tkn.char != '>':
+                group_name += curr_tkn.char
+                next_tkn()
+                if curr_tkn is None:
+                    raise Exception('Unterminated named group name.')
+            if len(group_name) == 0:
+                raise Exception('Unexpected empty named group name.')
+            next_tkn()  # consumes '>'
+            return group_name
 
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)

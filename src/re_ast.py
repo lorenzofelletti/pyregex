@@ -180,10 +180,11 @@ class GroupNode(ASTNode):
     Inherits from ASTNode and models the group in a regex.
     """
 
-    def __init__(self, children: "list[ASTNode]", capturing: bool = False):
+    def __init__(self, children: "list[ASTNode]", capturing: bool = False, group_name: str = 'default'):
         super().__init__()
         self.type = 'groupNode'
         self.__capturing__ = capturing
+        self.group_name = group_name
         self.children = children
         self.min = 1
         self.max = 1

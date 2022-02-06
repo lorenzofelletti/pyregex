@@ -86,11 +86,11 @@ class RegexEngine:
                 already_matched = False
                 for match in matches:
                     if match.group_id == ast.id:
-                        match = Match(ast.id, start_idx, end_idx, string)
+                        match = Match(ast.id, start_idx, end_idx, string, ast.group_name)
                         already_matched = True
                         break
                 if not already_matched:
-                    matches.append(Match(ast.id, start_idx, end_idx, string))
+                    matches.append(Match(ast.id, start_idx, end_idx, string, ast.group_name))
 
             return res, end_idx
 

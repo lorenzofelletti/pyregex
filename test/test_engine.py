@@ -302,3 +302,25 @@ def test_engine_8(reng):
 
     res, _ = reng.match(r'(aa){1,2}', r'aa')
     assert res == True
+
+
+def test_named_group(reng):
+    res, _, matches = reng.match(
+        r'(?<fancy>clancy)', r'clancy', return_matches=True)
+    assert res == True
+    assert matches[0][1].name == 'fancy'
+
+
+def test_named_group_fail_1(reng):
+    with pytest.raises(Exception):
+        res, _ = reng.match(r"(?<)", '')
+
+
+def test_named_group_fail_2(reng):
+    with pytest.raises(Exception):
+        res, _ = reng.match(r"(?<abb)", '')
+
+
+def test_named_group_fail_empty_name(reng):
+    with pytest.raises(Exception):
+        res, _ = reng.match(r"(?<>asf)", '')
