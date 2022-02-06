@@ -1,3 +1,4 @@
+from functools import lru_cache
 import numpy as np
 from .lexer import Lexer
 from .tokens import *
@@ -19,6 +20,7 @@ class Pyrser:
     def __init__(self):
         self.lxr = Lexer()
 
+    @lru_cache(maxsize=4)
     def parse(self, re: str):
         """
         REGEX GRAMMAR recognized:
