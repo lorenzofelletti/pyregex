@@ -1,4 +1,5 @@
 import sys
+from time import perf_counter, perf_counter_ns
 from src.engine import RegexEngine
 
 
@@ -26,8 +27,10 @@ if __name__ == "__main__":
         i = 2
         while i < len(sys.argv):
             test_str = sys.argv[i]
+            start_time = perf_counter_ns()
             res, _ = reng.match(regex, test_str)
-            print_string = "'{}' match with the regex".format(
-                test_str) if res == True else "'{}' doesn't match the given regex".format(test_str)
+            stop_time = perf_counter_ns()
+            print(f'Execution time: {stop_time - start_time} ns.')
+            print_string = f"'{test_str}' match with the regex" if res == True else f"'{test_str}' doesn't match the given regex"
             print(print_string)
             i += 1
