@@ -13,13 +13,14 @@ Features implemented includes:
 | match end | ...$ |
 | escaping | \\ |
 | grouping | (...) |
+| named group | (?<name>...) | 
 | non-capturing group | (?:...) |
 | alternative | a\|b |
 | wildcard | . |
 | space | \s |
 | quantifiers | ? \* + |
 | curly brace quantification | {exact} {min,max} {,max} {min,} |
-| range element | [a-z\|A-Z\|^059] |
+| range element | [^a-zA-Z059] |
 
 ## How to run it
 
@@ -27,32 +28,32 @@ Features implemented includes:
 
 Clone the repo:
 
-```
+```Bash
 git clone https://github.com/lorenzofelletti/pyregex
 ```
 
 Change to the cloned direcory:
 
-```
+```Bash
 cd pyregex
 ```
 
 Create and activate a virtualenv:
 
-```
+```Bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
 Install requirements:
 
-```
+```Bash
 pip3 install -r requirements.txt
 ```
 
 Run tests and print coverage:
 
-```
+```Bash
 chmod +x print_coverage.sh
 ./print_coverage.sh
 ```
@@ -61,7 +62,7 @@ chmod +x print_coverage.sh
 
 Activate the venv and start the python interpreter in the repo folder:
 
-```
+```Bash
 cd pyregex
 source venv/bin/activate
 python3
@@ -69,7 +70,7 @@ python3
 
 Play with the engine:
 
-```
+```Python
 from src.engine import RegexEngine
 
 reng = RegexEngine()
@@ -81,13 +82,13 @@ Or:
 
 Enable execution on `regex.sh`:
 
-```
+```Bash
 cd pyregex
 chmod +x regex.sh
 ```
 
 Run regex.sh
 
-```
+```Bash
 ./regex.sh 'my_regex' 'test_str_1' <'test_str2' ... 'test_str_n'>
 ```
