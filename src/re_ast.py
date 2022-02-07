@@ -1,4 +1,6 @@
+from collections import deque
 import itertools
+import typing
 
 
 class ASTNode:
@@ -26,7 +28,7 @@ class RE(ASTNode):
         self.type = 're'
         # self.__capturing__ = True
         self.child = child
-        self.children = [child]
+        self.children = deque([child])
 
     # def is_capturing(self):
     #    return self.__capturing__
@@ -172,7 +174,7 @@ class NotNode(ASTNode):
         super().__init__()
         self.type = 'notNode'
         self.child = child
-        self.children = [child]
+        self.children = deque([child])
 
 
 class GroupNode(ASTNode):
@@ -180,7 +182,7 @@ class GroupNode(ASTNode):
     Inherits from ASTNode and models the group in a regex.
     """
 
-    def __init__(self, children: "list[ASTNode]", capturing: bool = False, group_name: str = 'default'):
+    def __init__(self, children: typing.Deque[ASTNode], capturing: bool = False, group_name: str = 'default'):
         super().__init__()
         self.type = 'groupNode'
         self.__capturing__ = capturing
@@ -189,5 +191,5 @@ class GroupNode(ASTNode):
         self.min = 1
         self.max = 1
 
-    def is_capturing(self):
+    def is_capturing(self) -> bool:
         return self.__capturing__
