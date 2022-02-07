@@ -91,9 +91,9 @@ class Pyrser:
                 match_end = False
 
             if match_start:
-                node.children = np.append(StartElement(), node.children)
+                node.children.appendleft(StartElement())
             if match_end:
-                node.children = np.append(node.children, EndElement())
+                node.children.append(EndElement())
 
             if isinstance(curr_tkn, OrToken):
                 next_tkn()
@@ -102,7 +102,7 @@ class Pyrser:
             return node
 
         def parse_group(capturing: bool = True, group_name: str = 'default'):
-            elements = np.array([])  # holds the children of the GroupNode
+            elements = deque()  # holds the children of the GroupNode
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
                     not isinstance(curr_tkn, RightParenthesis) and \
@@ -112,7 +112,7 @@ class Pyrser:
                 next_tkn()
 
                 if isinstance(curr_tkn, EndToken):
-                    elements = np.append(elements, new_el)
+                    elements.append(new_el)
                     break
 
                 if isinstance(curr_tkn, Quantifier):
@@ -127,7 +127,7 @@ class Pyrser:
                 elif isinstance(curr_tkn, LeftCurlyBrace):
                     parse_curly(new_el)
 
-                elements = np.append(elements, new_el)
+                elements.append(new_el)
                 # next_tkn()
 
             return GroupNode(children=elements, capturing=capturing, group_name=group_name)
