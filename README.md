@@ -13,7 +13,7 @@ Features implemented includes:
 | match end | ...$ |
 | escaping | \\ |
 | grouping | (...) |
-| named group | (?<name>...) | 
+| named group | (?\<name\>...) | 
 | non-capturing group | (?:...) |
 | alternative | a\|b |
 | wildcard | . |
