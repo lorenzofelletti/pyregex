@@ -18,7 +18,7 @@ class RegexEngine:
         all_matches = []
         string_consumed_idx = 0
 
-        res, str_i, matches = self.__match__(re, string)
+        res, str_i, matches = self.__match__(re, string, 0)
         if res:
             string_consumed_idx += str_i
             all_matches.append(matches)
@@ -29,24 +29,25 @@ class RegexEngine:
             return return_fnc(res, string_consumed_idx, all_matches, return_matches)
 
         while True:
-            string = string[str_i:]
+            #string = string[str_i:]
             if not len(string) > 0:
                 return return_fnc(res, string_consumed_idx, all_matches, return_matches)
-            res, str_i, matches = self.__match__(re, string)
+            res, str_i, matches = self.__match__(re, string, str_i)
             if res:
-                string_consumed_idx += str_i
+                string_consumed_idx = str_i
                 all_matches.append(matches)
             else:
                 return return_fnc(True, string_consumed_idx, all_matches, return_matches)
 
-    def __match__(self, re: str, string: str):
+    def __match__(self, re: str, string: str, start_str_i):
         """
         Same as match, but always returns after the first match.
         """
         ast = self.parser.parse(re=re)
         matches = []
 
-        str_i = 0  # matched string chars so far
+        #str_i = 0  # matched string chars so far
+        str_i = start_str_i
 
         def return_fnc(res: bool, str_i: int):
             nonlocal matches
@@ -256,12 +257,12 @@ class RegexEngine:
 
             return True, str_i
 
-        i = 0
+        i = str_i
         _ = 0
 
         if len(string) == 0:
             res, consumed = save_matches(
-                match_group=match_group, ast=ast, string=string, start_idx=0)
+                match_group=match_group, ast=ast, string=string, start_idx=str_i)
             return return_fnc(res, consumed)
 
         while str_i < len(string):

@@ -3,110 +3,110 @@ from ..src.engine import RegexEngine
 
 
 @pytest.fixture
-def reng():
+def reng() -> RegexEngine:
     return RegexEngine()
 
 
-def test_simplest(reng):
+def test_simplest(reng: RegexEngine):
     assert (True, 1) == reng.match('a', 'a')
 
 
-def test_simplest_with_wildcard(reng):
+def test_simplest_with_wildcard(reng: RegexEngine):
     assert (True, 1) == reng.match('.', 'a')
 
 
-def test_simplest_but_longer(reng):
+def test_simplest_but_longer(reng: RegexEngine):
     assert (True, 3) == reng.match('a.c', 'abc')
 
 
-def test_wildcard(reng):
+def test_wildcard(reng: RegexEngine):
     assert (True, 2) == reng.match('.*a', 'aa')
 
 
-def test_backtracking(reng):
+def test_backtracking(reng: RegexEngine):
     assert (True, 4) == reng.match('a*a', 'aaaa')
 
 
-def test_or(reng):
+def test_or(reng: RegexEngine):
     assert (True, 1) == reng.match('a.*|b', 'b')
 
 
-def test_or_no_match(reng):
+def test_or_no_match(reng: RegexEngine):
     res, consumed = reng.match('^a|b$', 'c')
     assert res == False
 
 
-def test_or_no_match_with_bt(reng):
+def test_or_no_match_with_bt(reng: RegexEngine):
     res, consumed = reng.match('a|b', 'c')
     assert res == False
 
 
-def test_bt_no_match(reng):
+def test_bt_no_match(reng: RegexEngine):
     res, consumed = reng.match('a{5}a', 'aaaaa')
     assert res == False
 
 
-def test_match_group_zero_or_more(reng):
+def test_match_group_zero_or_more(reng: RegexEngine):
     res, consumed = reng.match('(a)*', 'aa')
     assert (True, 2) == (res, consumed)
 
 
-def test_fail_group_one_or_more(reng):
+def test_fail_group_one_or_more(reng: RegexEngine):
     res, cons = reng.match('^(a)+', 'b')
     assert res == False
 
 
-def test_complex_match(reng):
+def test_complex_match(reng: RegexEngine):
     res, cons = reng.match('^(a|b+c)?[n-z]{2}', 'axx')
     assert res == True
 
 
-def test_complex_match_2(reng):
+def test_complex_match_2(reng: RegexEngine):
     res, cons = reng.match('^(a|b+c)?[n-z]{2}', 'xx')
     assert res == True
 
 
-def test_match_mail_simple(reng):
+def test_match_mail_simple(reng: RegexEngine):
     res, cons = reng.match(r'.*@.*\.(com|it)', 'vr@gmail.com')
     assert res == True
 
 
-def test_bt_index_leaf(reng):
+def test_bt_index_leaf(reng: RegexEngine):
     res, cons = reng.match(r'^aaaa.*a$', 'aaaaa')
     assert res == True
 
 
-def test_bt_index_or(reng):
+def test_bt_index_or(reng: RegexEngine):
     res, cons = reng.match(r'^x(a|b)?bc$', 'xbc')
     assert res == True
 
 
-def test_bt_index_group(reng):
+def test_bt_index_group(reng: RegexEngine):
     res, cons = reng.match(r'^x(a)?ac$', 'xac')
     assert res == True
 
 
-def test_match_or_left(reng):
+def test_match_or_left(reng: RegexEngine):
     res, cons = reng.match('na|nb', 'na')
     assert res == True
 
 
-def test_match_or_right(reng):
+def test_match_or_right(reng: RegexEngine):
     res, cons = reng.match('na|nb', 'nb')
     assert res == True
 
 
-def test_match_or_right_at_start_end(reng):
+def test_match_or_right_at_start_end(reng: RegexEngine):
     res, cons = reng.match('^na|nb$', 'nb')
     assert res == True
 
 
-def test_no_match_after_end(reng):
+def test_no_match_after_end(reng: RegexEngine):
     res, cons = reng.match('^na|nb$', 'nb ')
     assert res == False
 
 
-def test_match_sequence_with_start_end_correctly(reng):
+def test_match_sequence_with_start_end_correctly(reng: RegexEngine):
     res, cons = reng.match('^a|b$', 'a  ')
     assert res == True
 
@@ -120,22 +120,22 @@ def test_match_sequence_with_start_end_correctly(reng):
     assert res == False
 
 
-def test_complex_match_3(reng):
+def test_complex_match_3(reng: RegexEngine):
     res, _ = reng.match('a(b|[c-n])+b{3}.{2}', 'ahhbbbbbb')
     assert res == True
 
 
-def test_bit_less_complex_match_3(reng):
+def test_bit_less_complex_match_3(reng: RegexEngine):
     res, _ = reng.match('a(b|[c-n])+b{3}', 'ahhbbbbbb')
     assert res == True
 
 
-def test_unescaped_special_ch(reng):
+def test_unescaped_special_ch(reng: RegexEngine):
     with pytest.raises(Exception):
         reng.match('$a^', 'aa')
 
 
-def test_various_emails(reng):
+def test_various_emails(reng: RegexEngine):
     res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@hotmail.it')
     assert res == True
     res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@gmail.com')
@@ -144,7 +144,7 @@ def test_various_emails(reng):
     assert res == False
 
 
-def test_match_empty(reng):
+def test_match_empty(reng: RegexEngine):
     res, _ = reng.match('^$', '')
     assert res == True
     res, _ = reng.match('$', '')
@@ -153,7 +153,7 @@ def test_match_empty(reng):
     assert res == True
 
 
-def test_match_space(reng):
+def test_match_space(reng: RegexEngine):
     res, _ = reng.match(r'\s', r' ')
     assert res == True
     res, _ = reng.match(r'\s', '\t')
@@ -168,32 +168,32 @@ def test_match_space(reng):
     assert res == True
 
 
-def test_match_space_2(reng):
+def test_match_space_2(reng: RegexEngine):
     res, _ = reng.match(r'\s+', '\r\t\n \f \v')
     assert res == True
     res, _ = reng.match(r'^\s$', '\r\t')
     assert res == False
 
 
-def test_return_matches_simple(reng):
+def test_return_matches_simple(reng: RegexEngine):
     res, _, matches = reng.match(r'a\s', r'a ', return_matches=True)
     assert res == True
     assert len(matches[0]) == 1
 
 
-def test_return_matches_two(reng):
+def test_return_matches_two(reng: RegexEngine):
     res, _m, matches = reng.match(r'a(b)+a', r'abba', return_matches=True)
     assert res == True
     assert len(matches[0]) == 2
 
 
-def test_non_capturing_group(reng):
+def test_non_capturing_group(reng: RegexEngine):
     res, _, matches = reng.match(r'a(?:b)+a', r'abba', return_matches=True)
     assert res == True
     assert len(matches[0]) == 1
 
 
-def test_continue_after_match_and_return_matches_simple(reng):
+def test_continue_after_match_and_return_matches_simple(reng: RegexEngine):
     string = 'abba'
     res, consumed, matches = reng.match(
         r'a', string, continue_after_match=True, return_matches=True)
@@ -206,7 +206,7 @@ def test_continue_after_match_and_return_matches_simple(reng):
     assert matches[1][0].match == 'a'
 
 
-def test_continue_after_match_and_return_matches_2(reng):
+def test_continue_after_match_and_return_matches_2(reng: RegexEngine):
     string = 'abbai'
     res, consumed, matches = reng.match(
         r'a', string, continue_after_match=True, return_matches=True)
@@ -219,19 +219,19 @@ def test_continue_after_match_and_return_matches_2(reng):
     assert matches[1][0].match == 'a'
 
 
-def test_question_mark(reng):
+def test_question_mark(reng: RegexEngine):
     res, _ = reng.match(r'https?://', r'http://')
     assert res == True
     res, _ = reng.match(r'https?://', r'https://')
     assert res == True
 
 
-def test_engine_1(reng):
+def test_engine_1(reng: RegexEngine):
     with pytest.raises(Exception):
         res, _ = reng.match("$^", '')
 
 
-def test_engine_2(reng):
+def test_engine_2(reng: RegexEngine):
     mail = "lorenzo.felletti@mail.com"
     res, consumed = reng.match(
         r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
@@ -249,14 +249,14 @@ def test_engine_2(reng):
     assert res == False
 
 
-def test_engine_3(reng):
+def test_engine_3(reng: RegexEngine):
     string = "lorem ipsum"
     res, consumed = reng.match(r"m", string, continue_after_match=True)
     assert res == True
     assert consumed == len(string)
 
 
-def test_engine_4(reng):
+def test_engine_4(reng: RegexEngine):
     string = "lorem ipsum"
     res, consumed, matches = reng.match(
         r"m", string, continue_after_match=True, return_matches=True)
@@ -268,7 +268,7 @@ def test_engine_4(reng):
     assert matches[1][0].match == 'm'
 
 
-def test_engine_5(reng):
+def test_engine_5(reng: RegexEngine):
     match_1 = "lor.fel@ah.ha"
     match_2 = "fel.log@ha.ah"
     string = match_1 + " " + match_2
@@ -282,7 +282,7 @@ def test_engine_5(reng):
     assert matches[1][0].match == match_2
 
 
-def test_engine_6(reng):
+def test_engine_6(reng: RegexEngine):
     res, consumed = reng.match(r'[\abc]', r'\\')
     assert res == False
     assert consumed == 0
@@ -291,12 +291,12 @@ def test_engine_6(reng):
     assert res == True
 
 
-def test_engine_7(reng):
+def test_engine_7(reng: RegexEngine):
     res, _ = reng.match(r'(a)+(a)?(a{2}|b)+', 'aaabbaa')
     assert res == True
 
 
-def test_engine_8(reng):
+def test_engine_8(reng: RegexEngine):
     res, _ = reng.match(r'(a){2}', r'a')
     assert res == False
 
@@ -304,23 +304,35 @@ def test_engine_8(reng):
     assert res == True
 
 
-def test_named_group(reng):
+def test_named_group(reng: RegexEngine):
     res, _, matches = reng.match(
         r'(?<fancy>clancy)', r'clancy', return_matches=True)
     assert res == True
     assert matches[0][1].name == 'fancy'
 
 
-def test_named_group_fail_1(reng):
+def test_named_group_fail_1(reng: RegexEngine):
     with pytest.raises(Exception):
         res, _ = reng.match(r"(?<)", '')
 
 
-def test_named_group_fail_2(reng):
+def test_named_group_fail_2(reng: RegexEngine):
     with pytest.raises(Exception):
         res, _ = reng.match(r"(?<abb)", '')
 
 
-def test_named_group_fail_empty_name(reng):
+def test_named_group_fail_empty_name(reng: RegexEngine):
     with pytest.raises(Exception):
         res, _ = reng.match(r"(?<>asf)", '')
+
+
+def test_matches_indexes(reng: RegexEngine):
+    test_str = "abbabbab"
+    res, consumed, matches = reng.match(
+        r"a", test_str, continue_after_match=True, return_matches=True)
+    assert res == True
+    assert consumed == len(test_str) - 1
+    assert len(matches) == 3
+    assert matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
+    assert matches[1][0].start_idx == 3 and matches[1][0].end_idx == 4
+    assert matches[2][0].start_idx == 6 and matches[2][0].end_idx == 7
