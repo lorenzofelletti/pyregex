@@ -71,7 +71,7 @@ python3
 Play with the engine:
 
 ```Python
-from src.engine import RegexEngine
+from pyregexp.engine import RegexEngine
 
 reng = RegexEngine()
 

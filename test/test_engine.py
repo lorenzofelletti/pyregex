@@ -1,5 +1,5 @@
 import pytest
-from ..src.engine import RegexEngine
+from ..pyregexp.engine import RegexEngine
 
 
 @pytest.fixture

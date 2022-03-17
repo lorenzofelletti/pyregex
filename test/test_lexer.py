@@ -1,6 +1,6 @@
 import pytest
-from ..src.tokens import *
-from ..src.lexer import Lexer
+from ..pyregexp.tokens import *
+from ..pyregexp.lexer import Lexer
 
 
 @pytest.fixture

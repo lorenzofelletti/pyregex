@@ -1,6 +1,6 @@
 import sys
 from time import perf_counter_ns
-from src.engine import RegexEngine
+from pyregexp.engine import RegexEngine
 
 
 def usage():

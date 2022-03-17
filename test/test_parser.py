@@ -1,7 +1,7 @@
 import math
 import pytest
-from ..src.re_ast import RE, EndElement, GroupNode, Element, RangeElement, SpaceElement, StartElement
-from ..src.pyrser import Pyrser
+from ..pyregexp.re_ast import RE, EndElement, GroupNode, Element, RangeElement, SpaceElement, StartElement
+from ..pyregexp.pyrser import Pyrser
 
 
 @pytest.fixture

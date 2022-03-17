@@ -1,4 +1,4 @@
-from ..src.re_ast import ASTNode, RE, LeafNode, Element, WildcardElement, SpaceElement, RangeElement, StartElement, EndElement, OrNode, NotNode, GroupNode
+from ..pyregexp.re_ast import ASTNode, RE, LeafNode, Element, WildcardElement, SpaceElement, RangeElement, StartElement, EndElement, OrNode, NotNode, GroupNode
 
 
 def test_ASTNode():
