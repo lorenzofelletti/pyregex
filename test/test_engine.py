@@ -324,3 +324,42 @@ def test_named_group_fail_2(reng):
 def test_named_group_fail_empty_name(reng):
     with pytest.raises(Exception):
         res, _ = reng.match(r"(?<>asf)", '')
+
+
+def test_matches_indexes(reng: RegexEngine):
+    test_str = "abbabbab"
+    res, consumed, matches = reng.match(
+        r"a", test_str, continue_after_match=True, return_matches=True)
+    assert res == True
+    assert consumed == len(test_str) - 1
+    assert len(matches) == 3
+    assert matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
+    assert matches[1][0].start_idx == 3 and matches[1][0].end_idx == 4
+    assert matches[2][0].start_idx == 6 and matches[2][0].end_idx == 7
+
+
+def test_returned_matches_indexes(reng: RegexEngine):
+    regex = r"(a)(a)(a)(a)(a)(a)"
+    test_str = "aaaaaaaaaacccaaaaaac"
+    res, consumed, matches = reng.match(regex, test_str, True, True)
+
+    assert res == True
+    assert consumed == len(test_str)-1
+    assert matches is not None and len(matches) == 2
+    assert len(matches[0]) == 7
+    assert len(matches[1]) == 7
+    assert matches[0][0].start_idx == 0 and matches[0][0].end_idx == 6
+    assert matches[0][1].start_idx == 5 and matches[0][1].end_idx == 6
+    assert matches[0][2].start_idx == 4 and matches[0][2].end_idx == 5
+    assert matches[0][3].start_idx == 3 and matches[0][3].end_idx == 4
+    assert matches[0][4].start_idx == 2 and matches[0][4].end_idx == 3
+    assert matches[0][5].start_idx == 1 and matches[0][5].end_idx == 2
+    assert matches[0][6].start_idx == 0 and matches[0][6].end_idx == 1
+
+    assert matches[1][0].start_idx == 13 and matches[1][0].end_idx == 19
+    assert matches[1][1].start_idx == 18 and matches[1][1].end_idx == 19
+    assert matches[1][2].start_idx == 17 and matches[1][2].end_idx == 18
+    assert matches[1][3].start_idx == 16 and matches[1][3].end_idx == 17
+    assert matches[1][4].start_idx == 15 and matches[1][4].end_idx == 16
+    assert matches[1][5].start_idx == 14 and matches[1][5].end_idx == 15
+    assert matches[1][6].start_idx == 13 and matches[1][6].end_idx == 14
