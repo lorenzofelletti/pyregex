@@ -1,21 +1,36 @@
+from typing import List
 from functools import lru_cache
 from .tokens import *
-import numpy as np
 
 
 class Lexer:
-    def __init__(self):
-        self.__digits__ = '0123456789'
-        pass
+    """ Lexer for the pyregexp library.
 
-    def __is_digit__(self, ch: str):
+    This class contains the method to scan a regular expression string producing the corresponding tokens.
+    """
+
+    def __init__(self) -> None:
+        self.__digits__ = '0123456789'
+
+    def __is_digit__(self, ch: str) -> bool:
         return self.__digits__.find(ch) > -1
 
     @lru_cache(maxsize=4)
-    def scan(self, re: str):
+    def scan(self, re: str) -> List[Token]:
+        """ Regular expressions scanner.
+
+        Scans the regular expression in input and produces the list of recognized Tokens in output.
+        It raises an Exception if there are errors in the regular expression.
+
+        Args:
+            re (str): the regular expression to scan
+
+        Returns:
+            List[Token]: the list of tokens recognized in the passed regex
+        """
         tokens = []
 
-        def append(elem: Token):
+        def append(elem: Token) -> None:
             nonlocal tokens
             tokens.append(elem)
 

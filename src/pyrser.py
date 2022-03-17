@@ -1,44 +1,35 @@
+from typing import Union, Callable
 from functools import lru_cache
-import numpy as np
+import math
 from .lexer import Lexer
 from .tokens import *
 from .re_ast import *
 
 
 class Pyrser:
-    """
-    Pyrser parse regular expressions and return the correspondent AST.
+    """ Regular Expression Parser.
 
-    Legal Regex examples:
-    a
-    (a)
-    a|b
-    ^a[^0-3b-xz]|BBBA{3,4}$
-    ^\?.*VR|46.+e?$
+    Pyrser instances can parse regular expressions and return the corresponding AST.    
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.lxr = Lexer()
 
     @lru_cache(maxsize=4)
-    def parse(self, re: str):
-        """
-        REGEX GRAMMAR recognized:
-        RE ::= RE_SEQ
-        RE_SEQ ::= '^'? GROUP '$'? ('|' RE_SEQ)?
-        GROUP ::= (RANGE_EL QTIFIER?)+
-        RANGE_EL ::= EL | '[' '^'? INNER_EL ']'
-        EL ::= '\\'? (ch | SPECIAL) | '(' ('?:')? RE_SEQ ')'
+    def parse(self, re: str) -> RE:
+        """ Parses a regular expression.
 
-        QTIFIER ::= '*' | '+' | '?' | '{' (num)? ',' num '}' | '{' num '}'
-        INNER_EL ::= ch+ | ch '-' ch INNER_EL
-        SPECIAL ::= '(' | ')' | '+' | '{' | '[' | '|' | '.' | '^' | '$' | ...
-        """
-        #lower_alphabet_characters = 'abcdefghijklmnopqrstuvwxyz'
-        #upper_alphabet_characters = lower_alphabet_characters.upper()
-        #digit_characters = '0123456789'
+        Parses a regex and returns the corresponding AST.
+        If the regex contains errors raises an Exception.
 
-        def get_range_str(start: str, end: str):
+        Args:
+            re (str): a regular expression
+
+        Returns:
+            RE: the root node of the regular expression's AST
+        """
+
+        def get_range_str(start: str, end: str) -> str:
             result = ''
             i = ord(start)
             while i <= ord(end):
@@ -46,18 +37,12 @@ class Pyrser:
                 i += 1
             return result
 
-        # def get_range_str(original_str, idx1, idx2):
-            # if not negate:
-        #    return original_str[idx1:idx2+1]
-            # else:
-            #    return original_str[:idx1] + original_str[idx2+1:]
-
-        def next_tkn_initializer(re: str):
+        def next_tkn_initializer(re: str) -> Callable[[bool], Union[Token, None]]:
             tokens = self.lxr.scan(re=re)
 
             i = -1
 
-            def next_tkn(without_consuming: bool = False):
+            def next_tkn(without_consuming: bool = False) -> Union[Token, None]:
                 nonlocal i
                 nonlocal tokens
                 nonlocal curr_tkn
@@ -73,10 +58,10 @@ class Pyrser:
 
             return next_tkn
 
-        def parse_re():
+        def parse_re() -> RE:
             return RE(parse_re_seq())
 
-        def parse_re_seq(capturing: bool = True, group_name: str = 'default'):
+        def parse_re_seq(capturing: bool = True, group_name: str = 'default') -> Union[OrNode, GroupNode]:
             match_start, match_end = False, False
             if type(curr_tkn) is Start or type(curr_tkn) is Circumflex:
                 next_tkn()
@@ -101,7 +86,7 @@ class Pyrser:
 
             return node
 
-        def parse_group(capturing: bool = True, group_name: str = 'default'):
+        def parse_group(capturing: bool = True, group_name: str = 'default') -> GroupNode:
             elements = deque()  # holds the children of the GroupNode
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
@@ -119,10 +104,10 @@ class Pyrser:
                     if isinstance(curr_tkn, ZeroOrOne):
                         new_el.min, new_el.max = 0, 1
                     elif isinstance(curr_tkn, ZeroOrMore):
-                        new_el.min, new_el.max = 0, np.inf
+                        new_el.min, new_el.max = 0, math.inf
                     else:
                         # suppose it's 1+
-                        new_el.min, new_el.max = 1, np.inf
+                        new_el.min, new_el.max = 1, math.inf
                     next_tkn()
                 elif isinstance(curr_tkn, LeftCurlyBrace):
                     parse_curly(new_el)
@@ -132,7 +117,7 @@ class Pyrser:
 
             return GroupNode(children=elements, capturing=capturing, group_name=group_name)
 
-        def parse_curly(new_el: ASTNode):
+        def parse_curly(new_el: ASTNode) -> None:
             # move past the left brace
             next_tkn()
 
@@ -161,7 +146,7 @@ class Pyrser:
                     val_2 += curr_tkn.char
                     next_tkn()
                 if val_2 == '':
-                    val_2 == np.inf
+                    val_2 == math.inf
                 else:
                     val_2 = int(val_2)
 
@@ -169,12 +154,12 @@ class Pyrser:
                 next_tkn()
 
                 new_el.min = val_1 if type(val_1) is int else 0
-                new_el.max = val_2 if type(val_2) is int else np.inf
+                new_el.max = val_2 if type(val_2) is int else math.inf
 
             except Exception as e:
                 raise Exception('Invalid curly brace syntax.')
 
-        def parse_range_el():
+        def parse_range_el() -> ASTNode:
             if isinstance(curr_tkn, LeftBracket):
                 next_tkn()
                 element = parse_inner_el()
@@ -186,7 +171,7 @@ class Pyrser:
             else:
                 return parse_el()
 
-        def parse_inner_el():
+        def parse_inner_el() -> RangeElement:
             nonlocal curr_tkn
             # innerel creates a single RangeElement with all the matches
             match_str = ''
@@ -243,7 +228,7 @@ class Pyrser:
 
             return RangeElement(match_str="".join(sorted(set(match_str))), is_positive_logic=positive_logic)
 
-        def parse_el():
+        def parse_el() -> Union[Element, OrNode, GroupNode]:
             group_name = None
             if isinstance(curr_tkn, ElementToken):
                 return Element(match_ch=curr_tkn.char)
