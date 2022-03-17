@@ -1,15 +1,57 @@
-from typing import Callable
+"""Module containing the RegexEngine class.
+
+The RegexEngine class implements a regular expressions engine.
+
+  Typical usage example:
+
+  reng = RegexEngine()
+  result, consumed = reng.match(r"a+bx", "aabx")
+"""
+
+
+from typing import Callable, Union, Tuple, List
 from .pyrser import Pyrser
 from .match import Match
-from .re_ast import ASTNode, Element, GroupNode, LeafNode, NotNode, OrNode, RangeElement, RE, WildcardElement, EndElement, StartElement
+from .re_ast import ASTNode, GroupNode, LeafNode, OrNode, EndElement, StartElement
 
 
 class RegexEngine:
+    """ Regular Expressions Engine.
+
+    This class contains all the necessary to recognize regular expressions in a test string.
+    """
+
     def __init__(self):
         self.parser = Pyrser()
 
-    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False):
-        def return_fnc(res: bool, str_i: int, all_matches: list, return_matches: bool):
+    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
+        """ Searches a regex in a test string.
+
+        Searches the passed regular expression in the passed test string and
+        returns the result.
+
+        It is possible to customize both the returned value and the search
+        method.
+
+        Args:
+            re (str): the regular expression to search
+            string (str): the test string
+            return_matches (bool): if True a data structure containing the
+                matches - the whole match and the subgroups matched
+                (default is False)
+            continue_after_match (bool): if True the engine continues
+                matching until the whole input is consumed
+                (default is False)
+
+        Returns:
+            A tuple containing whether a match was found or not, the last
+            matched character index, and (if return_matches is True) a
+            list of lists of Match, where each list of matches represents
+            in the first position the whole match, and in the subsequent
+            positions all the group and subgroups matched. 
+        """
+
+        def return_fnc(res: bool, str_i: int, all_matches: list, return_matches: bool) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
             if return_matches:
                 return res, str_i, all_matches
             else:
@@ -39,26 +81,24 @@ class RegexEngine:
             else:
                 return return_fnc(True, string_consumed_idx, all_matches, return_matches)
 
-    def __match__(self, re: str, string: str, start_str_i):
+    def __match__(self, re: str, string: str, start_str_i: int) -> Tuple[bool, int, List[Match]]:
         """
         Same as match, but always returns after the first match.
         """
         ast = self.parser.parse(re=re)
         matches = []
 
-        #str_i = 0  # matched string chars so far
+        # str_i = 0  # matched string chars so far
         str_i = start_str_i
 
-        def return_fnc(res: bool, str_i: int):
+        def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, List[Match]]:
             nonlocal matches
             matches.reverse()
             return res, str_i, matches
 
-        def backtrack(backtrack_stack: list, str_i: int, curr_i: int):
+        def backtrack(backtrack_stack: list, str_i: int, curr_i: int) -> Tuple[bool, int, int]:
             '''
-            Retun a tuple: 
-             - bool: can/can't I backtrack
-             - new_str_i: the new str_i to use
+            Return whether it is possible to backtrack and the state to backtrack to.
             '''
             if len(backtrack_stack) == 0:
                 return False, str_i, curr_i
@@ -87,15 +127,17 @@ class RegexEngine:
                 already_matched = False
                 for match in matches:
                     if match.group_id == ast.id:
-                        match = Match(ast.id, start_idx, end_idx, string, ast.group_name)
+                        match = Match(ast.id, start_idx, end_idx,
+                                      string, ast.group_name)
                         already_matched = True
                         break
                 if not already_matched:
-                    matches.append(Match(ast.id, start_idx, end_idx, string, ast.group_name))
+                    matches.append(
+                        Match(ast.id, start_idx, end_idx, string, ast.group_name))
 
             return res, end_idx
 
-        def match_group(ast: ASTNode, string: str):
+        def match_group(ast: ASTNode, string: str) -> Tuple[bool, int]:
             '''
             Match a group, which is always the case.
 
@@ -272,5 +314,6 @@ class RegexEngine:
             if res:
                 return return_fnc(True, str_i)
             else:
+                matches = []
                 str_i = i
         return return_fnc(False, _)
