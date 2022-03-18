@@ -363,3 +363,45 @@ def test_returned_matches_indexes(reng: RegexEngine):
     assert matches[1][4].start_idx == 15 and matches[1][4].end_idx == 16
     assert matches[1][5].start_idx == 14 and matches[1][5].end_idx == 15
     assert matches[1][6].start_idx == 13 and matches[1][6].end_idx == 14
+
+
+def test_returned_groups(reng: RegexEngine):
+    # group e will not be matched due to the greediness of the engine,
+    # .* "eats" the "e" in test_str
+    regex = r"a(b).*(e)?c(c)(c)c"
+    test_str = "abxxecccc"
+    res, consumed, matches = reng.match(regex, test_str, True, True)
+
+    assert res == True
+    assert consumed == len(test_str)
+    assert len(matches) == 1
+    assert len(matches[0]) == 4
+    assert matches[0][0].match == test_str
+    assert matches[0][1].match == "c" and matches[0][1].start_idx == len(
+        test_str) - 2
+    assert matches[0][2].match == "c" and matches[0][2].start_idx == len(
+        test_str) - 3
+    assert matches[0][3].match == "b" and matches[0][3].start_idx == 1
+
+
+def test_on_long_string(reng: RegexEngine):
+    regex = r"a(b)?.{0,10}c(d)"
+    test_str = "abcd dcvrsbshpeuiògjAAwdew ac abc vcsweacscweflllacd"
+    res, _, matches = reng.match(regex, test_str, True, True)
+
+    assert res == True
+    assert len(matches) == 2
+
+    assert len(matches[0]) == 3
+    assert matches[0][0].start_idx == 0 and \
+        matches[0][0].end_idx == 4
+    assert matches[0][1].start_idx == 3 and \
+        matches[0][1].end_idx == 4
+    assert matches[0][2].start_idx == 1 and \
+        matches[0][2].end_idx == 2
+
+    len(matches[1]) == 2
+    assert matches[1][0].start_idx == 39 and \
+        matches[1][0].end_idx == len(test_str)
+    assert matches[1][1].start_idx == len(test_str)-1 and \
+        matches[1][1].end_idx == len(test_str)

@@ -229,7 +229,7 @@ class Pyrser:
             return RangeElement(match_str="".join(sorted(set(match_str))), is_positive_logic=positive_logic)
 
         def parse_el() -> Union[Element, OrNode, GroupNode]:
-            group_name = None
+            group_name = "default"
             if isinstance(curr_tkn, ElementToken):
                 return Element(match_ch=curr_tkn.char)
             elif isinstance(curr_tkn, Wildcard):
