@@ -1,5 +1,6 @@
 from typing import Union, Callable
 from functools import lru_cache
+import itertools
 import math
 from .lexer import Lexer
 from .tokens import *
@@ -61,7 +62,7 @@ class Pyrser:
         def parse_re() -> RE:
             return RE(parse_re_seq())
 
-        def parse_re_seq(capturing: bool = True, group_name: str = 'default') -> Union[OrNode, GroupNode]:
+        def parse_re_seq(capturing: bool = True, group_name: str = None) -> Union[OrNode, GroupNode]:
             match_start, match_end = False, False
             if type(curr_tkn) is Start or type(curr_tkn) is Circumflex:
                 next_tkn()
@@ -86,7 +87,12 @@ class Pyrser:
 
             return node
 
-        def parse_group(capturing: bool = True, group_name: str = 'default') -> GroupNode:
+        def parse_group(capturing: bool = True, group_name: str = None) -> GroupNode:
+            nonlocal groups_counter
+            
+            if group_name is None:
+                group_name = "Group " + str(next(groups_counter))
+            
             elements = deque()  # holds the children of the GroupNode
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
@@ -229,7 +235,8 @@ class Pyrser:
             return RangeElement(match_str="".join(sorted(set(match_str))), is_positive_logic=positive_logic)
 
         def parse_el() -> Union[Element, OrNode, GroupNode]:
-            group_name = "default"
+            group_name: Union[str,None]
+            group_name = None
             if isinstance(curr_tkn, ElementToken):
                 return Element(match_ch=curr_tkn.char)
             elif isinstance(curr_tkn, Wildcard):
@@ -277,6 +284,8 @@ class Pyrser:
                 raise Exception('Unexpected empty named group name.')
             next_tkn()  # consumes '>'
             return group_name
+        
+        groups_counter = itertools.count(start=1)
 
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)
