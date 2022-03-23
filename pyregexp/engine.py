@@ -11,6 +11,7 @@ Example:
 
 
 from typing import Callable, Union, Tuple, List
+import unicodedata
 from .pyrser import Pyrser
 from .match import Match
 from .re_ast import RE, GroupNode, LeafNode, OrNode, EndElement, StartElement
@@ -25,7 +26,7 @@ class RegexEngine:
     def __init__(self):
         self.parser: Pyrser = Pyrser()
 
-    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
+    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: bool = False) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
         """ Searches a regex in a test string.
 
         Searches the passed regular expression in the passed test string and
@@ -33,6 +34,10 @@ class RegexEngine:
 
         It is possible to customize both the returned value and the search
         method.
+
+        The ignore_case flag may cause unexpected results in the returned
+        number of matched characters, and also in the returned matches, e.g.
+        when the character ẞ is present in either the regex or the test string.
 
         Args:
             re (str): the regular expression to search
@@ -43,6 +48,7 @@ class RegexEngine:
             continue_after_match (bool): if True the engine continues
                 matching until the whole input is consumed
                 (default is False)
+            ignore_case (bool): (default is False)
 
         Returns:
             A tuple containing whether a match was found or not, the last
@@ -58,6 +64,10 @@ class RegexEngine:
                 return res, str_i, all_matches
             else:
                 return res, str_i
+
+        if ignore_case:
+           re = unicodedata.normalize("NFKD", re).casefold()
+           string = unicodedata.normalize("NFKD", string).casefold()
 
         all_matches = []  # variables holding the matched groups list for each matched substring in the test string
         highest_matched_idx = 0  # holds the highest test_str index matched
