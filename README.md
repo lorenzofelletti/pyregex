@@ -2,7 +2,7 @@
 
 ## What is it
 
-Pyregex(p) is a Regex Engine with backtracking and all major regular-expressions' features.
+Pyregex(p) is a backtracking Regex Engine complete with all major regular-expressions' features.
 
 It is composed of a Lexer, a Parser (a TDRD parser) and finally the Engine.
 

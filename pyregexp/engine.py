@@ -2,10 +2,11 @@
 
 The RegexEngine class implements a regular expressions engine.
 
-  Typical usage example:
+Example:
+    Matching a regex with some test string::
 
-  reng = RegexEngine()
-  result, consumed = reng.match(r"a+bx", "aabx")
+        reng = RegexEngine()
+        result, consumed = reng.match(r"a+bx", "aabx")
 """
 
 
@@ -22,7 +23,7 @@ class RegexEngine:
     """
 
     def __init__(self):
-        self.parser = Pyrser()
+        self.parser: Pyrser = Pyrser()
 
     def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
         """ Searches a regex in a test string.
@@ -179,11 +180,11 @@ class RegexEngine:
 
             if ast.is_capturing() and res == True:
                 for i in range(0, len(matches)):
-                    if matches[i].group_id == ast.id:
+                    if matches[i].group_id == ast.group_id:
                         matches.remove(matches[i])
                         break
                 matches.append(
-                    Match(ast.id, start_idx, end_idx, string, ast.group_name))
+                    Match(ast.group_id, start_idx, end_idx, string, ast.group_name))
 
             return res, end_idx
 
@@ -196,9 +197,6 @@ class RegexEngine:
             '''
             nonlocal str_i
             backtrack_stack = []
-            # curr_node here is always a group or ornode
-            # because recursion occur only w/ OrNode,
-            # which
             curr_node = ast.children[0]
             i = 0  # the children i'm iterating, not to confuse with str_i
 
@@ -216,11 +214,6 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         tmp_str_i = str_i
-                        # if isinstance(curr_node.left, OrNode):
-                        #    match_group(ast=curr_node.left, string=string)
-                        # else:
-                        #    save_matches(ast=curr_node.left,
-                        #                 string=string, start_idx=str_i)
                         res, new_str_i = match_group(ast=curr_node.left, string=string) if not isinstance(
                             curr_node.left, GroupNode) else save_matches(match_group=match_group, ast=curr_node.left, string=string, start_idx=str_i)
                         if res == True:
@@ -261,13 +254,10 @@ class RegexEngine:
                     while j < max_:
                         tmp_str_i = str_i
 
-                        # res, new_str_i = match_group(
-                        #    ast=curr_node, string=string)
                         res, new_str_i = save_matches(
                             match_group, curr_node, string, str_i)
                         if res == True:
-                            # yes! Come on!
-                            # i must use the before_str_i because str_i is changed by the match_group
+                            # i must use tmp_str_i because str_i is changed by the match_group
                             # call, so (new_str_i - str_i) would be always 0
                             consumed_list.append(new_str_i - tmp_str_i)
                             #str_i = new_str_i

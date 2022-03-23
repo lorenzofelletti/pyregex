@@ -32,3 +32,6 @@ coverage.xml
 .vscode
 .pytest_cache/
 .coverage
+
+# Sphinx documentation
+docs/_build/*
