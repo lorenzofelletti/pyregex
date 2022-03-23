@@ -62,13 +62,13 @@ class Pyrser:
         def parse_re() -> RE:
             return RE(parse_re_seq())
 
-        def parse_re_seq(capturing: bool = True, group_name: str = None) -> Union[OrNode, GroupNode]:
+        def parse_re_seq(capturing: bool = True, group_name: str = None, group_id: int = None) -> Union[OrNode, GroupNode]:
             match_start, match_end = False, False
             if type(curr_tkn) is Start or type(curr_tkn) is Circumflex:
                 next_tkn()
                 match_start = True
 
-            node = parse_group(capturing=capturing, group_name=group_name)
+            node = parse_group(capturing=capturing, group_name=group_name, group_id=group_id)
 
             if isinstance(curr_tkn, EndToken):
                 next_tkn()
@@ -83,15 +83,15 @@ class Pyrser:
 
             if isinstance(curr_tkn, OrToken):
                 next_tkn()
-                node = OrNode(left=node, right=parse_re_seq())
+                node = OrNode(left=node, right=parse_re_seq(
+                    group_name=node.group_name, group_id=node.group_id))
 
             return node
 
-        def parse_group(capturing: bool = True, group_name: str = None) -> GroupNode:
+        def parse_group(capturing: bool = True, group_name: str = None, group_id: int = None) -> GroupNode:
             nonlocal groups_counter
-
-            if group_name is None:
-                group_name = "Group " + str(next(groups_counter))
+            if group_id is None:
+                group_id = next(groups_counter)
 
             elements = deque()  # holds the children of the GroupNode
 
@@ -121,7 +121,7 @@ class Pyrser:
                 elements.append(new_el)
                 # next_tkn()
 
-            return GroupNode(children=elements, capturing=capturing, group_name=group_name)
+            return GroupNode(children=elements, capturing=capturing, group_name=group_name, group_id=group_id)
 
         def parse_curly(new_el: ASTNode) -> None:
             # move past the left brace
@@ -285,7 +285,7 @@ class Pyrser:
             next_tkn()  # consumes '>'
             return group_name
 
-        groups_counter = itertools.count(start=1)
+        groups_counter = itertools.count(start=0)
 
         curr_tkn = None
         next_tkn = next_tkn_initializer(re)

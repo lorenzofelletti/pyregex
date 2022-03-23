@@ -26,8 +26,9 @@ class RE(ASTNode):
         self.type = 're'
         self.__capturing__: bool = capturing
         self.group_name: str = group_name
+        self.group_id: int = -1
         self.child: Union[GroupNode, OrNode] = child
-        self.children: List[ASTNode] = deque([child])
+        self.children: List[Union[GroupNode, OrNode]] = deque([child])
 
     def is_capturing(self) -> bool:
         return self.__capturing__
@@ -200,11 +201,13 @@ class GroupNode(ASTNode):
     Inherits from ASTNode and models the group in a regex.
     """
 
-    def __init__(self, children: Deque[ASTNode], capturing: bool = False, group_name: str = 'default') -> None:
+    def __init__(self, children: Deque[ASTNode], capturing: bool = False, group_name: str = None, group_id: int = None) -> None:
         super().__init__()
         self.type = 'groupNode'
         self.__capturing__: bool = capturing
-        self.group_name: str = group_name
+        self.group_id: int = group_id if group_id is not None else self.id
+        self.group_name: str = group_name if group_name is not None else "Group " + \
+            str(self.group_id)
         self.children: List[ASTNode] = children
         self.min: Union[int, float] = 1
         self.max: Union[int, float] = 1
@@ -212,7 +215,7 @@ class GroupNode(ASTNode):
     def is_capturing(self) -> bool:
         """ Returns whether the GroupNode is capturing.
 
-        Returns:
-            bool: True if the group is capturing, False otherwise
-        """
+            Returns:
+                bool: True if the group is capturing, False otherwise
+            """
         return self.__capturing__
