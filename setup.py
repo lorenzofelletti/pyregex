@@ -7,14 +7,14 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='pyregexp',
     packages=['pyregexp'],
-    version='0.2.0',
+    version='0.2.1',
     license='MIT',
     description='Simple regex library',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Lorenzo Felletti',
     url='https://github.com/lorenzofelletti/pyregex',
-    download_url='https://github.com/lorenzofelletti/pyregex/archive/v0.2.0.tar.gz',
+    download_url='https://github.com/lorenzofelletti/pyregex/archive/v0.2.1.tar.gz',
     keywords=['regex', 'regexp', 'engine'],
     install_requires=[],
     classifiers=[
