@@ -26,7 +26,7 @@ class RegexEngine:
     def __init__(self):
         self.parser: Pyrser = Pyrser()
 
-    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: bool = False) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
+    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: int = 0) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
         """ Searches a regex in a test string.
 
         Searches the passed regular expression in the passed test string and
@@ -48,7 +48,9 @@ class RegexEngine:
             continue_after_match (bool): if True the engine continues
                 matching until the whole input is consumed
                 (default is False)
-            ignore_case (bool): (default is False)
+            ignore_case (int): when 0 the case is not ignored, when 1 a "soft"
+                case ignoring is performed, when 2 casefolding is performed.
+                (default is 0)
 
         Returns:
             A tuple containing whether a match was found or not, the last
@@ -65,7 +67,10 @@ class RegexEngine:
             else:
                 return res, str_i
 
-        if ignore_case:
+        if ignore_case == 1:
+            re = unicodedata.normalize("NFKD", re).lower()
+            string = unicodedata.normalize("NFKD", string).casefold()
+        elif ignore_case == 2:
            re = unicodedata.normalize("NFKD", re).casefold()
            string = unicodedata.normalize("NFKD", string).casefold()
 
