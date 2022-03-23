@@ -405,3 +405,37 @@ def test_on_long_string(reng: RegexEngine):
         matches[1][0].end_idx == len(test_str)
     assert matches[1][1].start_idx == len(test_str)-1 and \
         matches[1][1].end_idx == len(test_str)
+
+
+def test_ignore_case_no_casefolding(reng: RegexEngine):
+    regex = r"ss"
+    test_str = "SS"
+    res, _ = reng.match(regex, test_str, ignore_case=1)
+    assert res == True
+
+    regex = r"ÄCHER"
+    test_str = "ächer"
+    res, _ = reng.match(regex, test_str, ignore_case=1)
+    assert res == True
+
+    regex = r"ÄCHER"
+    test_str = "acher"
+    res, _ = reng.match(regex, test_str, ignore_case=1)
+    assert res == False
+
+
+def test_ignore_case_casefolding(reng: RegexEngine):
+    regex = r"ẞ"
+    test_str = "SS"
+    res, _ = reng.match(regex, test_str, ignore_case=2)
+    assert res == True
+
+    regex = r"ÄCHER"
+    test_str = "ächer"
+    res, _ = reng.match(regex, test_str, ignore_case=2)
+    assert res == True
+
+    regex = r"ÄCHER"
+    test_str = "acher"
+    res, _ = reng.match(regex, test_str, ignore_case=2)
+    assert res == False
