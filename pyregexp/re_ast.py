@@ -26,6 +26,7 @@ class RE(ASTNode):
         self.type = 're'
         self.__capturing__ = capturing
         self.group_name = group_name
+        self.group_id = -1
         self.child = child
         self.children = deque([child])
 
@@ -200,11 +201,12 @@ class GroupNode(ASTNode):
     Inherits from ASTNode and models the group in a regex.
     """
 
-    def __init__(self, children: Deque[ASTNode], capturing: bool = False, group_name: str = 'default') -> None:
+    def __init__(self, children: Deque[ASTNode], capturing: bool = False, group_name: str = None, group_id: int = None) -> None:
         super().__init__()
         self.type = 'groupNode'
         self.__capturing__ = capturing
-        self.group_name = group_name
+        self.group_id = group_id if group_id is not None else self.id
+        self.group_name = group_name if group_name is not None else "Group " + str(self.group_id)
         self.children = children
         self.min = 1
         self.max = 1

@@ -179,11 +179,11 @@ class RegexEngine:
 
             if ast.is_capturing() and res == True:
                 for i in range(0, len(matches)):
-                    if matches[i].group_id == ast.id:
+                    if matches[i].group_id == ast.group_id:
                         matches.remove(matches[i])
                         break
                 matches.append(
-                    Match(ast.id, start_idx, end_idx, string, ast.group_name))
+                    Match(ast.group_id, start_idx, end_idx, string, ast.group_name))
 
             return res, end_idx
 
