@@ -1,6 +1,6 @@
 from collections import deque
 import itertools
-from typing import Deque
+from typing import Deque, List, Union
 
 
 class ASTNode:
@@ -11,8 +11,8 @@ class ASTNode:
     id_iter = itertools.count()
 
     def __init__(self):
-        self.id = next(ASTNode.id_iter)
-        self.type = 'astNode'
+        self.id: int = next(ASTNode.id_iter)
+        self.type: str = 'astNode'
 
 
 class RE(ASTNode):
@@ -24,12 +24,12 @@ class RE(ASTNode):
     def __init__(self, child: ASTNode, capturing: bool = False, group_name: str = "RegEx"):
         super().__init__()
         self.type = 're'
-        self.__capturing__ = capturing
-        self.group_name = group_name
-        self.child = child
-        self.children = deque([child])
+        self.__capturing__: bool = capturing
+        self.group_name: str = group_name
+        self.child: Union[GroupNode, OrNode] = child
+        self.children: List[ASTNode] = deque([child])
 
-    def is_capturing(self):
+    def is_capturing(self) -> bool:
         return self.__capturing__
 
 
@@ -71,9 +71,9 @@ class Element(LeafNode):
     def __init__(self, match_ch: str = None) -> None:
         super().__init__()
         self.type = 'element'
-        self.match = match_ch
-        self.min = 1
-        self.max = 1
+        self.match: str = match_ch
+        self.min: Union[int, float] = 1
+        self.max: Union[int, float] = 1
 
     def is_match(self, ch: str = None, str_i: int = 0, str_len: int = 0) -> bool:
         return self.match == ch
@@ -119,10 +119,10 @@ class RangeElement(LeafNode):
     def __init__(self, match_str: str, is_positive_logic: bool = True) -> None:
         super().__init__()
         self.type = 'rangeElement'
-        self.match = match_str
-        self.min = 1
-        self.max = 1
-        self.is_positive_logic = is_positive_logic
+        self.match: str = match_str
+        self.min: Union[int, float] = 1
+        self.max: Union[int, float] = 1
+        self.is_positive_logic: bool = is_positive_logic
 
     def is_match(self, ch: str = None, str_i: int = 0, str_len: int = 0) -> bool:
         # XNOR of whether the ch is found and the logic (positive/negative)
@@ -139,8 +139,8 @@ class StartElement(LeafNode):
         super().__init__()
         self.type = 'startElement'
         self.match = None
-        self.min = 1
-        self.max = 1
+        self.min: Union[int, float] = 1
+        self.max: Union[int, float] = 1
 
     def is_match(self, ch: str = None, str_i: int = 0, str_len: int = 0) -> bool:
         return str_i == 0
@@ -156,8 +156,8 @@ class EndElement(LeafNode):
         super().__init__()
         self.type = 'endElement'
         self.match = ''
-        self.min = 1
-        self.max = 1
+        self.min: Union[int, float] = 1
+        self.max: Union[int, float] = 1
 
     def is_match(self, ch: str = None, str_i: int = 0, str_len: int = 0) -> bool:
         return str_i == str_len
@@ -173,11 +173,11 @@ class OrNode(ASTNode):
     def __init__(self, left: ASTNode, right: ASTNode) -> None:
         super().__init__()
         self.type = 'orNode'
-        self.left = left
-        self.right = right
-        self.children = [left, right]
-        self.min = 1
-        self.max = 1
+        self.left: ASTNode = left
+        self.right: ASTNode = right
+        self.children: List[ASTNode] = [left, right]
+        self.min: Union[int, float] = 1
+        self.max: Union[int, float] = 1
 
 
 # unused
@@ -190,8 +190,8 @@ class NotNode(ASTNode):
     def __init__(self, child: ASTNode) -> None:
         super().__init__()
         self.type = 'notNode'
-        self.child = child
-        self.children = deque([child])
+        self.child: ASTNode = child
+        self.children: List[ASTNode] = deque([child])
 
 
 class GroupNode(ASTNode):
@@ -203,11 +203,11 @@ class GroupNode(ASTNode):
     def __init__(self, children: Deque[ASTNode], capturing: bool = False, group_name: str = 'default') -> None:
         super().__init__()
         self.type = 'groupNode'
-        self.__capturing__ = capturing
-        self.group_name = group_name
-        self.children = children
-        self.min = 1
-        self.max = 1
+        self.__capturing__: bool = capturing
+        self.group_name: str = group_name
+        self.children: List[ASTNode] = children
+        self.min: Union[int, float] = 1
+        self.max: Union[int, float] = 1
 
     def is_capturing(self) -> bool:
         """ Returns whether the GroupNode is capturing.

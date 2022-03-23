@@ -14,7 +14,7 @@ class Pyrser:
     """
 
     def __init__(self) -> None:
-        self.lxr = Lexer()
+        self.lxr: Lexer = Lexer()
 
     @lru_cache(maxsize=4)
     def parse(self, re: str) -> RE:
@@ -89,10 +89,10 @@ class Pyrser:
 
         def parse_group(capturing: bool = True, group_name: str = None) -> GroupNode:
             nonlocal groups_counter
-            
+
             if group_name is None:
                 group_name = "Group " + str(next(groups_counter))
-            
+
             elements = deque()  # holds the children of the GroupNode
 
             while curr_tkn is not None and not isinstance(curr_tkn, OrToken) and \
@@ -235,7 +235,7 @@ class Pyrser:
             return RangeElement(match_str="".join(sorted(set(match_str))), is_positive_logic=positive_logic)
 
         def parse_el() -> Union[Element, OrNode, GroupNode]:
-            group_name: Union[str,None]
+            group_name: Union[str, None]
             group_name = None
             if isinstance(curr_tkn, ElementToken):
                 return Element(match_ch=curr_tkn.char)
@@ -284,7 +284,7 @@ class Pyrser:
                 raise Exception('Unexpected empty named group name.')
             next_tkn()  # consumes '>'
             return group_name
-        
+
         groups_counter = itertools.count(start=1)
 
         curr_tkn = None
