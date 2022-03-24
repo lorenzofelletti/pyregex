@@ -439,3 +439,24 @@ def test_ignore_case_casefolding(reng: RegexEngine):
     test_str = "acher"
     res, _ = reng.match(regex, test_str, ignore_case=2)
     assert res == False
+
+
+def test_empty_regex(reng: RegexEngine):
+    regex = r""
+    test_str = "aaaa"
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+
+def test_empty_test_str(reng: RegexEngine):
+    regex = r"a"
+    test_str = ""
+    res, _ = reng.match(regex, test_str)
+    assert res == False
+
+
+def test_empty_regex_and_test_str(reng: RegexEngine):
+    regex = r""
+    test_str = ""
+    res, _ = reng.match(regex, test_str)
+    assert res == True

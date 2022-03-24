@@ -212,7 +212,7 @@ class RegexEngine:
             '''
             nonlocal str_i
             backtrack_stack = []
-            curr_node = ast.children[0]
+            curr_node = ast.children[0] if len(ast.children) > 0 else None
             i = 0  # the children i'm iterating, not to confuse with str_i
 
             # the passed ast can't be a Leaf
