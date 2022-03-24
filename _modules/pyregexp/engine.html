@@ -397,7 +397,7 @@
 <span class="sd">            '''</span>
             <span class="k">nonlocal</span> <span class="n">str_i</span>
             <span class="n">backtrack_stack</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># the children i'm iterating, not to confuse with str_i</span>
 
             <span class="c1"># the passed ast can't be a Leaf</span>
