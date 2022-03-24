@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyregexp.lexer &#8212; pyregexp  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyregexp.lexer</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span> <span class="nn">.tokens</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="Lexer"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.lexer.Lexer">[docs]</a><span class="k">class</span> <span class="nc">Lexer</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Lexer for the pyregexp library.</span>
+
+<span class="sd">    This class contains the method to scan a regular expression string producing the corresponding tokens.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__digits__</span> <span class="o">=</span> <span class="s1">&#39;0123456789&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__is_digit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__digits__</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span>
+
+<div class="viewcode-block" id="Lexer.scan"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.lexer.Lexer.scan">[docs]</a>    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Token</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Regular expressions scanner.</span>
+
+<span class="sd">        Scans the regular expression in input and produces the list of recognized Tokens in output.</span>
+<span class="sd">        It raises an Exception if there are errors in the regular expression.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            re (str): the regular expression to scan</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Token]: the list of tokens recognized in the passed regex</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="n">elem</span><span class="p">:</span> <span class="n">Token</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">nonlocal</span> <span class="n">tokens</span>
+            <span class="n">tokens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">escape_found</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="p">):</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="n">re</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">escape_found</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;t&#39;</span><span class="p">:</span>
+                    <span class="n">append</span><span class="p">(</span><span class="n">ElementToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;s&#39;</span><span class="p">:</span>
+                    <span class="c1"># \s matches a space character</span>
+                    <span class="n">append</span><span class="p">(</span><span class="n">SpaceToken</span><span class="p">(</span><span class="n">space_ch</span><span class="o">=</span><span class="n">ch</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">append</span><span class="p">(</span><span class="n">ElementToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">ch</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">:</span>
+                <span class="n">escape_found</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># otherwise i won&#39;t be incremented bc of continue</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;.&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">Wildcard</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">LeftParenthesis</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">RightParenthesis</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;[&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">LeftBracket</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">Dash</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;]&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">RightBracket</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">LeftCurlyBrace</span><span class="p">())</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="p">):</span>
+                    <span class="n">ch</span> <span class="o">=</span> <span class="n">re</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;,&#39;</span><span class="p">:</span>
+                        <span class="n">append</span><span class="p">(</span><span class="n">Comma</span><span class="p">())</span>
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">__is_digit__</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+                        <span class="n">append</span><span class="p">(</span><span class="n">ElementToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">ch</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                        <span class="n">append</span><span class="p">(</span><span class="n">RightCurlyBrace</span><span class="p">())</span>
+                        <span class="k">break</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Bad token at index $</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;^&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">append</span><span class="p">(</span><span class="n">Start</span><span class="p">())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">append</span><span class="p">(</span><span class="n">Circumflex</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">End</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;?&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">QuestionMark</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">Asterisk</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;+&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">Plus</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;|&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">VerticalBar</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">RightCurlyBrace</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">append</span><span class="p">(</span><span class="n">ElementToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">ch</span><span class="p">))</span>
+
+            <span class="n">escape_found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">tokens</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyregexp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Lorenzo Felletti.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

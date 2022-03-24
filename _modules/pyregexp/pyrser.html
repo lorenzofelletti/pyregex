@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyregexp.pyrser &#8212; pyregexp  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyregexp.pyrser</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">.lexer</span> <span class="kn">import</span> <span class="n">Lexer</span>
+<span class="kn">from</span> <span class="nn">.tokens</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.re_ast</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="Pyrser"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.pyrser.Pyrser">[docs]</a><span class="k">class</span> <span class="nc">Pyrser</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Regular Expression Parser.</span>
+
+<span class="sd">    Pyrser instances can parse regular expressions and return the corresponding AST.    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lxr</span><span class="p">:</span> <span class="n">Lexer</span> <span class="o">=</span> <span class="n">Lexer</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Pyrser.parse"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.pyrser.Pyrser.parse">[docs]</a>    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RE</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Parses a regular expression.</span>
+
+<span class="sd">        Parses a regex and returns the corresponding AST.</span>
+<span class="sd">        If the regex contains errors raises an Exception.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            re (str): a regular expression</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            RE: the root node of the regular expression&#39;s AST</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">get_range_str</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">end</span><span class="p">):</span>
+                <span class="n">result</span> <span class="o">+=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">def</span> <span class="nf">next_tkn_initializer</span><span class="p">(</span><span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">bool</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="n">Token</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lxr</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">re</span><span class="o">=</span><span class="n">re</span><span class="p">)</span>
+
+            <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+            <span class="k">def</span> <span class="nf">next_tkn</span><span class="p">(</span><span class="n">without_consuming</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Token</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+                <span class="k">nonlocal</span> <span class="n">i</span>
+                <span class="k">nonlocal</span> <span class="n">tokens</span>
+                <span class="k">nonlocal</span> <span class="n">curr_tkn</span>
+
+                <span class="k">if</span> <span class="n">without_consuming</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">tokens</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">):</span>
+                    <span class="n">curr_tkn</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">curr_tkn</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">return</span> <span class="n">next_tkn</span>
+
+        <span class="k">def</span> <span class="nf">parse_re</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">RE</span><span class="p">(</span><span class="n">parse_re_seq</span><span class="p">())</span>
+
+        <span class="k">def</span> <span class="nf">parse_re_seq</span><span class="p">(</span><span class="n">capturing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">group_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">group_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">OrNode</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">]:</span>
+            <span class="n">match_start</span><span class="p">,</span> <span class="n">match_end</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Start</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Circumflex</span><span class="p">:</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="n">match_start</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="n">node</span> <span class="o">=</span> <span class="n">parse_group</span><span class="p">(</span><span class="n">capturing</span><span class="o">=</span><span class="n">capturing</span><span class="p">,</span> <span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">,</span> <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">EndToken</span><span class="p">):</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="n">match_end</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">match_end</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="k">if</span> <span class="n">match_start</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">StartElement</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">match_end</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EndElement</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">OrToken</span><span class="p">):</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">OrNode</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">node</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">parse_re_seq</span><span class="p">(</span>
+                    <span class="n">group_name</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">group_name</span><span class="p">,</span> <span class="n">group_id</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">group_id</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">node</span>
+
+        <span class="k">def</span> <span class="nf">parse_group</span><span class="p">(</span><span class="n">capturing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">group_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">group_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GroupNode</span><span class="p">:</span>
+            <span class="k">nonlocal</span> <span class="n">groups_counter</span>
+            <span class="k">if</span> <span class="n">group_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">group_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">groups_counter</span><span class="p">)</span>
+
+            <span class="n">elements</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>  <span class="c1"># holds the children of the GroupNode</span>
+
+            <span class="k">while</span> <span class="n">curr_tkn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">OrToken</span><span class="p">)</span> <span class="ow">and</span> \
+                    <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">RightParenthesis</span><span class="p">)</span> <span class="ow">and</span> \
+                    <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">EndToken</span><span class="p">):</span>
+                <span class="n">new_el</span> <span class="o">=</span> <span class="n">parse_range_el</span><span class="p">()</span>
+
+                <span class="n">next_tkn</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">EndToken</span><span class="p">):</span>
+                    <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_el</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">Quantifier</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">ZeroOrOne</span><span class="p">):</span>
+                        <span class="n">new_el</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">new_el</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">ZeroOrMore</span><span class="p">):</span>
+                        <span class="n">new_el</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">new_el</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># suppose it&#39;s 1+</span>
+                        <span class="n">new_el</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">new_el</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+                    <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">LeftCurlyBrace</span><span class="p">):</span>
+                    <span class="n">parse_curly</span><span class="p">(</span><span class="n">new_el</span><span class="p">)</span>
+
+                <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_el</span><span class="p">)</span>
+                <span class="c1"># next_tkn()</span>
+
+            <span class="k">return</span> <span class="n">GroupNode</span><span class="p">(</span><span class="n">children</span><span class="o">=</span><span class="n">elements</span><span class="p">,</span> <span class="n">capturing</span><span class="o">=</span><span class="n">capturing</span><span class="p">,</span> <span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">,</span> <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">parse_curly</span><span class="p">(</span><span class="n">new_el</span><span class="p">:</span> <span class="n">ASTNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># move past the left brace</span>
+            <span class="n">next_tkn</span><span class="p">()</span>
+
+            <span class="c1"># find val_1, val_2</span>
+            <span class="n">val_1</span><span class="p">,</span> <span class="n">val_2</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">ElementToken</span><span class="p">):</span>
+                    <span class="n">val_1</span> <span class="o">+=</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span>
+                    <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">val_1</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="n">val_1</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">val_1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val_1</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">RightCurlyBrace</span><span class="p">):</span>
+                    <span class="c1"># I&#39;m in the case {exact}</span>
+                    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">val_1</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+                        <span class="n">new_el</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">new_el</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">val_1</span><span class="p">,</span> <span class="n">val_1</span>
+                        <span class="n">next_tkn</span><span class="p">()</span>  <span class="c1"># skip the closing brace</span>
+                        <span class="k">return</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">()</span>
+
+                <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="k">while</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">ElementToken</span><span class="p">):</span>
+                    <span class="n">val_2</span> <span class="o">+=</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span>
+                    <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">val_2</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="n">val_2</span> <span class="o">==</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">val_2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val_2</span><span class="p">)</span>
+
+                <span class="c1"># skip the closing brace</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+
+                <span class="n">new_el</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="n">val_1</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">val_1</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">else</span> <span class="mi">0</span>
+                <span class="n">new_el</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">val_2</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">val_2</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid curly brace syntax.&#39;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">parse_range_el</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ASTNode</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">LeftBracket</span><span class="p">):</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="n">element</span> <span class="o">=</span> <span class="n">parse_inner_el</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">RightBracket</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">element</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                        <span class="s1">&#39;Missing closing </span><span class="se">\&#39;</span><span class="s1">]</span><span class="se">\&#39;</span><span class="s1">. Check the regex and try again.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">parse_el</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">parse_inner_el</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RangeElement</span><span class="p">:</span>
+            <span class="k">nonlocal</span> <span class="n">curr_tkn</span>
+            <span class="c1"># innerel creates a single RangeElement with all the matches</span>
+            <span class="n">match_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">curr_tkn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="s2">&quot;Missing closing &#39;]&#39;. Check the regex and try again.&quot;</span><span class="p">)</span>
+
+            <span class="n">positive_logic</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">NotToken</span><span class="p">):</span>
+                <span class="n">positive_logic</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+
+            <span class="n">prev_char</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">while</span> <span class="n">curr_tkn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">RightBracket</span><span class="p">):</span>
+                    <span class="k">break</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">SpaceToken</span><span class="p">):</span>
+                    <span class="n">match_str</span> <span class="o">+=</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span>
+                    <span class="n">next_tkn</span><span class="p">()</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># every character inside it must be treated as an element</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">ElementToken</span><span class="p">):</span>
+                    <span class="n">curr_tkn</span> <span class="o">=</span> <span class="n">ElementToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">next_tkn</span><span class="p">(</span><span class="n">without_consuming</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                        <span class="s2">&quot;Missing closing &#39;]&#39;. Check the regex and try again.&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">next_tkn</span><span class="p">(</span><span class="n">without_consuming</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">Dash</span><span class="p">):</span>
+                    <span class="c1"># it may be a range (like a-z, A-M, 0-9, ...)</span>
+                    <span class="n">prev_char</span> <span class="o">=</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span>
+                    <span class="n">next_tkn</span><span class="p">()</span>  <span class="c1"># current token is now the Dash</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">next_tkn</span><span class="p">(</span><span class="n">without_consuming</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">RightBracket</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">next_tkn</span><span class="p">(</span><span class="n">without_consuming</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">SpaceToken</span><span class="p">):</span>
+                        <span class="c1"># we&#39;re in one of these scenarios: &quot;&lt;char&gt;-]&quot; &quot;&lt;char&gt;-\s&quot;</span>
+                        <span class="c1"># the dash and previous character must be interpreted as single elements</span>
+                        <span class="n">match_str</span> <span class="o">+=</span> <span class="n">prev_char</span> <span class="o">+</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># we&#39;re in the case of an actual range (or next_tkn is none)</span>
+                        <span class="n">next_tkn</span><span class="p">()</span>  <span class="c1"># curr_tkn is now the one after the dash</span>
+                        <span class="k">if</span> <span class="n">next_tkn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                                <span class="s2">&quot;Missing closing &#39;]&#39;. Check the regex and try again.&quot;</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="nb">ord</span><span class="p">(</span><span class="n">prev_char</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">ord</span><span class="p">(</span><span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span><span class="p">):</span>
+                            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Range values reversed. Start &#39;</span><span class="si">{</span><span class="n">prev_char</span><span class="si">}</span><span class="s2">&#39; char code is greater than end &#39;</span><span class="si">{</span><span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span><span class="si">}</span><span class="s2">&#39; char code.&quot;</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">match_str</span> <span class="o">+=</span> <span class="n">get_range_str</span><span class="p">(</span><span class="n">prev_char</span><span class="p">,</span>
+                                                       <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># no range, no missing &#39;]&#39;, just a char to add to match_str</span>
+                    <span class="n">match_str</span> <span class="o">+=</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+
+            <span class="k">return</span> <span class="n">RangeElement</span><span class="p">(</span><span class="n">match_str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">match_str</span><span class="p">))),</span> <span class="n">is_positive_logic</span><span class="o">=</span><span class="n">positive_logic</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">parse_el</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Element</span><span class="p">,</span> <span class="n">OrNode</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">]:</span>
+            <span class="n">group_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="n">group_name</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">ElementToken</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">Element</span><span class="p">(</span><span class="n">match_ch</span><span class="o">=</span><span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">Wildcard</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">WildcardElement</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">SpaceToken</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">SpaceElement</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">LeftParenthesis</span><span class="p">):</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="c1"># (?: for non-capturing group</span>
+                <span class="n">capturing</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">)</span> <span class="ow">is</span> <span class="n">QuestionMark</span><span class="p">:</span>
+                    <span class="n">next_tkn</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;:&#39;</span><span class="p">:</span>
+                        <span class="n">capturing</span> <span class="o">=</span> <span class="kc">False</span>
+                        <span class="n">next_tkn</span><span class="p">()</span>
+                    <span class="k">elif</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;&lt;&#39;</span><span class="p">:</span>
+                        <span class="n">next_tkn</span><span class="p">()</span>
+                        <span class="n">group_name</span> <span class="o">=</span> <span class="n">parse_group_name</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">curr_tkn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unterminated group&#39;</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s1">&#39;Invalid group: </span><span class="se">\&#39;</span><span class="si">{</span><span class="n">LeftParenthesis</span><span class="p">()</span><span class="si">}{</span><span class="n">QuestionMark</span><span class="p">()</span><span class="si">}{</span><span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span><span class="si">}</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">parse_re_seq</span><span class="p">(</span><span class="n">capturing</span><span class="o">=</span><span class="n">capturing</span><span class="p">,</span> <span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_tkn</span><span class="p">,</span> <span class="n">RightParenthesis</span><span class="p">):</span>
+                    <span class="c1"># next_tkn() not needed (the parse_group while loop will eat the parenthesis)</span>
+                    <span class="k">return</span> <span class="n">res</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Missing closing group parenthesis </span><span class="se">\&#39;</span><span class="s1">)</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="s1">&#39;Unescaped special character </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">parse_group_name</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">curr_tkn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unterminated named group name.&#39;</span><span class="p">)</span>
+            <span class="n">group_name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">while</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span> <span class="o">!=</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">:</span>
+                <span class="n">group_name</span> <span class="o">+=</span> <span class="n">curr_tkn</span><span class="o">.</span><span class="n">char</span>
+                <span class="n">next_tkn</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">curr_tkn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unterminated named group name.&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group_name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unexpected empty named group name.&#39;</span><span class="p">)</span>
+            <span class="n">next_tkn</span><span class="p">()</span>  <span class="c1"># consumes &#39;&gt;&#39;</span>
+            <span class="k">return</span> <span class="n">group_name</span>
+
+        <span class="n">groups_counter</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">curr_tkn</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">next_tkn</span> <span class="o">=</span> <span class="n">next_tkn_initializer</span><span class="p">(</span><span class="n">re</span><span class="p">)</span>
+        <span class="n">next_tkn</span><span class="p">()</span>
+
+        <span class="n">ast</span> <span class="o">=</span> <span class="n">parse_re</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">curr_tkn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Unable to parse the entire regex.</span><span class="se">\n</span><span class="s2">Check the regex and try again.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ast</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyregexp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Lorenzo Felletti.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

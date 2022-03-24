@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyregexp.re_ast &#8212; pyregexp  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyregexp.re_ast</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Deque</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+
+<div class="viewcode-block" id="ASTNode"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.ASTNode">[docs]</a><span class="k">class</span> <span class="nc">ASTNode</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; AST nodes base class.</span>
+
+<span class="sd">    Abstract Syntax Tree classes hierarchy base class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">id_iter</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">ASTNode</span><span class="o">.</span><span class="n">id_iter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;astNode&#39;</span></div>
+
+
+<div class="viewcode-block" id="RE"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.RE">[docs]</a><span class="k">class</span> <span class="nc">RE</span><span class="p">(</span><span class="n">ASTNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Entry point of the AST.</span>
+
+<span class="sd">    This class acts as the entry point for a regular expression&#39;s AST.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">ASTNode</span><span class="p">,</span> <span class="n">capturing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">group_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;RegEx&quot;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;re&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__capturing__</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">capturing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">group_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">GroupNode</span><span class="p">,</span> <span class="n">OrNode</span><span class="p">]</span> <span class="o">=</span> <span class="n">child</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">GroupNode</span><span class="p">,</span> <span class="n">OrNode</span><span class="p">]]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">child</span><span class="p">])</span>
+
+<div class="viewcode-block" id="RE.is_capturing"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.RE.is_capturing">[docs]</a>    <span class="k">def</span> <span class="nf">is_capturing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__capturing__</span></div></div>
+
+
+<div class="viewcode-block" id="LeafNode"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.LeafNode">[docs]</a><span class="k">class</span> <span class="nc">LeafNode</span><span class="p">(</span><span class="n">ASTNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST class defining the leaf nodes.</span>
+
+<span class="sd">    Every leaf node inherits from this class. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="LeafNode.is_match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.LeafNode.is_match">[docs]</a>    <span class="k">def</span> <span class="nf">is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns whether the passed inputs matches with the node.</span>
+
+<span class="sd">        For example, if the node matches the character &quot;a&quot; and the passed ch is</span>
+<span class="sd">        &quot;b&quot; the method will return False, but if the passed ch was &quot;a&quot; then the</span>
+<span class="sd">        result would have been True.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ch (str): the char you want to match</span>
+<span class="sd">            str_i (int): the string index you are considering</span>
+<span class="sd">            str_len (int): the test string length</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: represents whether there is a match between the node and the</span>
+<span class="sd">            passed parameters or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div></div>
+
+
+<div class="viewcode-block" id="Element"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.Element">[docs]</a><span class="k">class</span> <span class="nc">Element</span><span class="p">(</span><span class="n">LeafNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST Element.</span>
+
+<span class="sd">    Specialization of the LeafNode class. This class models the elements of a regex.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">match_ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;element&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">match_ch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="Element.is_match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.Element.is_match">[docs]</a>    <span class="k">def</span> <span class="nf">is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">str_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span> <span class="o">==</span> <span class="n">ch</span></div></div>
+
+
+<div class="viewcode-block" id="WildcardElement"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.WildcardElement">[docs]</a><span class="k">class</span> <span class="nc">WildcardElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST WildcardElement.</span>
+
+<span class="sd">    Specialization of the Element class to model the wildcard behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">match_ch</span><span class="o">=</span><span class="s1">&#39;anything&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;wildcardElement&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="WildcardElement.is_match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.WildcardElement.is_match">[docs]</a>    <span class="k">def</span> <span class="nf">is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">str_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ch</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span></div></div>
+
+
+<div class="viewcode-block" id="SpaceElement"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.SpaceElement">[docs]</a><span class="k">class</span> <span class="nc">SpaceElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST SpaceElement.</span>
+
+<span class="sd">    Specialization of the element class to model the match-space behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;spaceElement&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="SpaceElement.is_match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.SpaceElement.is_match">[docs]</a>    <span class="k">def</span> <span class="nf">is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">str_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ch</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span></div></div>
+
+
+<div class="viewcode-block" id="RangeElement"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.RangeElement">[docs]</a><span class="k">class</span> <span class="nc">RangeElement</span><span class="p">(</span><span class="n">LeafNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST RangeElement.</span>
+
+<span class="sd">    Specialization of the LeafNode class modeling the range-element behavior,</span>
+<span class="sd">    that is that it matches with more than one character.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">match_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">is_positive_logic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;rangeElement&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">match_str</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_positive_logic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">is_positive_logic</span>
+
+<div class="viewcode-block" id="RangeElement.is_match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.RangeElement.is_match">[docs]</a>    <span class="k">def</span> <span class="nf">is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">str_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># XNOR of whether the ch is found and the logic (positive/negative)</span>
+        <span class="k">return</span> <span class="ow">not</span><span class="p">((</span><span class="n">ch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">)</span> <span class="o">^</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_positive_logic</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="StartElement"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.StartElement">[docs]</a><span class="k">class</span> <span class="nc">StartElement</span><span class="p">(</span><span class="n">LeafNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST StartElement.</span>
+
+<span class="sd">    Inherits from LeafNode and models the match-start-element behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;startElement&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="StartElement.is_match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.StartElement.is_match">[docs]</a>    <span class="k">def</span> <span class="nf">is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">str_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">str_i</span> <span class="o">==</span> <span class="mi">0</span></div></div>
+
+
+<div class="viewcode-block" id="EndElement"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.EndElement">[docs]</a><span class="k">class</span> <span class="nc">EndElement</span><span class="p">(</span><span class="n">LeafNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST EndElement.</span>
+
+<span class="sd">    Inherits from LeafNode and models the match-end-element behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;endElement&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="EndElement.is_match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.EndElement.is_match">[docs]</a>    <span class="k">def</span> <span class="nf">is_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">str_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">str_i</span> <span class="o">==</span> <span class="n">str_len</span></div></div>
+
+
+<div class="viewcode-block" id="OrNode"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.OrNode">[docs]</a><span class="k">class</span> <span class="nc">OrNode</span><span class="p">(</span><span class="n">ASTNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST OrNode.</span>
+
+<span class="sd">    Inherits from ASTNode and models the or-nodes, that is the nodes that</span>
+<span class="sd">    divides the regex into two possible matching paths.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">ASTNode</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">ASTNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;orNode&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">:</span> <span class="n">ASTNode</span> <span class="o">=</span> <span class="n">left</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">:</span> <span class="n">ASTNode</span> <span class="o">=</span> <span class="n">right</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ASTNode</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+<span class="c1"># unused</span>
+<div class="viewcode-block" id="NotNode"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.NotNode">[docs]</a><span class="k">class</span> <span class="nc">NotNode</span><span class="p">(</span><span class="n">ASTNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST NotNode.</span>
+
+<span class="sd">    Inherits from ASTNode and models the not-node behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">ASTNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;notNode&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="p">:</span> <span class="n">ASTNode</span> <span class="o">=</span> <span class="n">child</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ASTNode</span><span class="p">]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">child</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="GroupNode"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.GroupNode">[docs]</a><span class="k">class</span> <span class="nc">GroupNode</span><span class="p">(</span><span class="n">ASTNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; AST GroupNode.</span>
+
+<span class="sd">    Inherits from ASTNode and models the group in a regex.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">children</span><span class="p">:</span> <span class="n">Deque</span><span class="p">[</span><span class="n">ASTNode</span><span class="p">],</span> <span class="n">capturing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">group_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">group_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;groupNode&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__capturing__</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">capturing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">group_id</span> <span class="k">if</span> <span class="n">group_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">group_name</span> <span class="k">if</span> <span class="n">group_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;Group &quot;</span> <span class="o">+</span> \
+            <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ASTNode</span><span class="p">]</span> <span class="o">=</span> <span class="n">children</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="GroupNode.is_capturing"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.re_ast.GroupNode.is_capturing">[docs]</a>    <span class="k">def</span> <span class="nf">is_capturing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Returns whether the GroupNode is capturing.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                bool: True if the group is capturing, False otherwise</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__capturing__</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyregexp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Lorenzo Felletti.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

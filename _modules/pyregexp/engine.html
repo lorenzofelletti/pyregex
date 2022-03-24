@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pyregexp.engine &#8212; pyregexp  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pyregexp.engine</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Module containing the RegexEngine class.</span>
+
+<span class="sd">The RegexEngine class implements a regular expressions engine.</span>
+
+<span class="sd">Example:</span>
+<span class="sd">    Matching a regex with some test string::</span>
+
+<span class="sd">        reng = RegexEngine()</span>
+<span class="sd">        result, consumed = reng.match(r&quot;a+bx&quot;, &quot;aabx&quot;)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">unicodedata</span>
+<span class="kn">from</span> <span class="nn">.pyrser</span> <span class="kn">import</span> <span class="n">Pyrser</span>
+<span class="kn">from</span> <span class="nn">.match</span> <span class="kn">import</span> <span class="n">Match</span>
+<span class="kn">from</span> <span class="nn">.re_ast</span> <span class="kn">import</span> <span class="n">RE</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">,</span> <span class="n">LeafNode</span><span class="p">,</span> <span class="n">OrNode</span><span class="p">,</span> <span class="n">EndElement</span><span class="p">,</span> <span class="n">StartElement</span>
+
+
+<div class="viewcode-block" id="RegexEngine"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.engine.RegexEngine">[docs]</a><span class="k">class</span> <span class="nc">RegexEngine</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Regular Expressions Engine.</span>
+
+<span class="sd">    This class contains all the necessary to recognize regular expressions in a test string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="p">:</span> <span class="n">Pyrser</span> <span class="o">=</span> <span class="n">Pyrser</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RegexEngine.match"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.engine.RegexEngine.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_matches</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">continue_after_match</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">ignore_case</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot; Searches a regex in a test string.</span>
+
+<span class="sd">        Searches the passed regular expression in the passed test string and</span>
+<span class="sd">        returns the result.</span>
+
+<span class="sd">        It is possible to customize both the returned value and the search</span>
+<span class="sd">        method.</span>
+
+<span class="sd">        The ignore_case flag may cause unexpected results in the returned</span>
+<span class="sd">        number of matched characters, and also in the returned matches, e.g.</span>
+<span class="sd">        when the character ẞ is present in either the regex or the test string.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            re (str): the regular expression to search</span>
+<span class="sd">            string (str): the test string</span>
+<span class="sd">            return_matches (bool): if True a data structure containing the</span>
+<span class="sd">                matches - the whole match and the subgroups matched</span>
+<span class="sd">                (default is False)</span>
+<span class="sd">            continue_after_match (bool): if True the engine continues</span>
+<span class="sd">                matching until the whole input is consumed</span>
+<span class="sd">                (default is False)</span>
+<span class="sd">            ignore_case (int): when 0 the case is not ignored, when 1 a &quot;soft&quot;</span>
+<span class="sd">                case ignoring is performed, when 2 casefolding is performed.</span>
+<span class="sd">                (default is 0)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple containing whether a match was found or not, the last</span>
+<span class="sd">            matched character index, and (if return_matches is True) a</span>
+<span class="sd">            list of lists of Match, where each list of matches represents</span>
+<span class="sd">            in the first position the whole match, and in the subsequent</span>
+<span class="sd">            positions all the group and subgroups matched. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">return_fnc</span><span class="p">(</span><span class="n">res</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">all_matches</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">return_matches</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+            <span class="sd">&quot;&quot;&quot; If return_matches is True returns the matches.&quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">return_matches</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">all_matches</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">str_i</span>
+
+        <span class="k">if</span> <span class="n">ignore_case</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">re</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFKD&quot;</span><span class="p">,</span> <span class="n">re</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFKD&quot;</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">ignore_case</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+           <span class="n">re</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFKD&quot;</span><span class="p">,</span> <span class="n">re</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+           <span class="n">string</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">&quot;NFKD&quot;</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+
+        <span class="n">all_matches</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># variables holding the matched groups list for each matched substring in the test string</span>
+        <span class="n">highest_matched_idx</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># holds the highest test_str index matched</span>
+
+        <span class="n">res</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__match__</span><span class="p">(</span><span class="n">re</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+            <span class="n">highest_matched_idx</span> <span class="o">=</span> <span class="n">str_i</span>
+            <span class="n">all_matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">highest_matched_idx</span><span class="p">,</span> <span class="n">all_matches</span><span class="p">,</span> <span class="n">return_matches</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">continue_after_match</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">highest_matched_idx</span><span class="p">,</span> <span class="n">all_matches</span><span class="p">,</span> <span class="n">return_matches</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1">#string = string[str_i:]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">highest_matched_idx</span><span class="p">,</span> <span class="n">all_matches</span><span class="p">,</span> <span class="n">return_matches</span><span class="p">)</span>
+            <span class="n">res</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__match__</span><span class="p">(</span><span class="n">re</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="n">str_i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+                <span class="n">highest_matched_idx</span> <span class="o">=</span> <span class="n">str_i</span>
+                <span class="n">all_matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">highest_matched_idx</span><span class="p">,</span> <span class="n">all_matches</span><span class="p">,</span> <span class="n">return_matches</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__match__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start_str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot; Same as match, but always returns after the first match.&quot;&quot;&quot;</span>
+        <span class="n">ast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">re</span><span class="o">=</span><span class="n">re</span><span class="p">)</span>
+        <span class="n">matches</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># str_i represents the matched characters so far. It is inizialized to</span>
+        <span class="c1"># the value of the input parameter start_str_i because the match could</span>
+        <span class="c1"># be to be searched starting at an index different from 0, e.g. in the</span>
+        <span class="c1"># case this function is called to search a second match in the test</span>
+        <span class="c1"># string.</span>
+        <span class="n">str_i</span> <span class="o">=</span> <span class="n">start_str_i</span>
+
+        <span class="k">def</span> <span class="nf">return_fnc</span><span class="p">(</span><span class="n">res</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]]:</span>
+            <span class="sd">&quot;&quot;&quot; Returns the Tuple to be returned by __match__.&quot;&quot;&quot;</span>
+            <span class="k">nonlocal</span> <span class="n">matches</span>
+            <span class="c1"># reverses the list so the last match (the &quot;whole&quot; match) is first</span>
+            <span class="n">matches</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">matches</span>
+
+        <span class="k">def</span> <span class="nf">backtrack</span><span class="p">(</span><span class="n">backtrack_stack</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">curr_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+            <span class="sd">&quot;&quot;&quot; Returns whether it is possible to backtrack and the state to backtrack to.</span>
+
+<span class="sd">            Takes as input the current state of the engine and returns whether</span>
+<span class="sd">            or not it is possible to backtrack.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                backtrack_stack (List[Tuple[int, int, int, List[int]]]): the</span>
+<span class="sd">                current backtrack_stack situation. The Tuple values represents,</span>
+<span class="sd">                in order from left to right, the node index of the entry in its</span>
+<span class="sd">                parent children list, the minimum times that node must be</span>
+<span class="sd">                matched, the time it is matched in the current state, the list</span>
+<span class="sd">                of consumed character each times it was matched</span>
+<span class="sd">                str_i (int): the current considered index of the test string</span>
+<span class="sd">                curr_i (int): the index of the GroupNode children considered</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                A Tuple containing a bool, True if it is possible to backtrack,</span>
+<span class="sd">                the new string index, and the new node children index to which</span>
+<span class="sd">                backtrack to. Note that the last two parameters only have a</span>
+<span class="sd">                meaning in the case it is possible to backtrack (the bool is</span>
+<span class="sd">                True).</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">backtrack_stack</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">curr_i</span>
+
+            <span class="c1"># the fist step is to pop the last tuple from the backtrack_stack</span>
+            <span class="n">node_i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">matched_times</span><span class="p">,</span> <span class="n">consumed_list</span> <span class="o">=</span> <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">matched_times</span> <span class="o">==</span> <span class="n">min_</span><span class="p">:</span>
+                <span class="c1"># if a node is already matched the minimum number of times, the</span>
+                <span class="c1"># chance you have to potentially be able to backtrack is to is</span>
+                <span class="c1"># to delete the entry from the stack and then search for a new</span>
+                <span class="c1"># possibility (recursively calling this function).</span>
+                <span class="c1"># But, before the recursion, you have to calculate  what the</span>
+                <span class="c1"># string index (str_i) value was before the node was matched</span>
+                <span class="c1"># even once. Thus, you have to decrease the string index</span>
+                <span class="c1"># of each consumption in the consumed_list.</span>
+
+                <span class="c1"># calculate_the new str_i</span>
+                <span class="k">for</span> <span class="n">consumption</span> <span class="ow">in</span> <span class="n">consumed_list</span><span class="p">:</span>
+                    <span class="n">str_i</span> <span class="o">-=</span> <span class="n">consumption</span>
+                <span class="c1"># recursive call</span>
+                <span class="k">return</span> <span class="n">backtrack</span><span class="p">(</span><span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">node_i</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># the node was matched more times than its min, so you just</span>
+                <span class="c1"># need to remove the last consumption from the list,</span>
+                <span class="c1"># decrease the str_i by that amount, decrease the times the node</span>
+                <span class="c1"># was matched - matched_times - by 1, and then append the stack</span>
+                <span class="c1"># the tuple with the new matched_times and consumed_list.</span>
+                <span class="n">last_consumed</span> <span class="o">=</span> <span class="n">consumed_list</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="n">new_str_i</span> <span class="o">=</span> <span class="n">str_i</span> <span class="o">-</span> <span class="n">last_consumed</span>
+                <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">node_i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">matched_times</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">consumed_list</span><span class="p">))</span>
+                <span class="c1"># lastly, you return that the backtracking is possible, and</span>
+                <span class="c1"># the state to which backtrack to.</span>
+                <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">new_str_i</span><span class="p">,</span> <span class="n">curr_i</span>
+
+        <span class="k">def</span> <span class="nf">save_matches</span><span class="p">(</span><span class="n">match_group</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ast</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">RE</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">],</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+            <span class="sd">&quot;&quot;&quot; Save the matches of capturing groups.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                match_group (Callable): the function to use to match the group</span>
+<span class="sd">                ast (Union[RE, GroupNode]): the group to match</span>
+<span class="sd">                string (str): the string to match</span>
+<span class="sd">                start_idx (int): the starting index</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                A tuple of the boolean result of the match, and the last matched</span>
+<span class="sd">                index.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">nonlocal</span> <span class="n">matches</span>
+
+            <span class="n">res</span><span class="p">,</span> <span class="n">end_idx</span> <span class="o">=</span> <span class="n">match_group</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">ast</span><span class="o">.</span><span class="n">is_capturing</span><span class="p">()</span> <span class="ow">and</span> <span class="n">res</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="n">matches</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">group_id</span> <span class="o">==</span> <span class="n">ast</span><span class="o">.</span><span class="n">group_id</span><span class="p">:</span>
+                        <span class="n">matches</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">matches</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                        <span class="k">break</span>
+                <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Match</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">group_id</span><span class="p">,</span> <span class="n">start_idx</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">group_name</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">end_idx</span>
+
+        <span class="k">def</span> <span class="nf">match_group</span><span class="p">(</span><span class="n">ast</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">RE</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">,</span> <span class="n">OrNode</span><span class="p">],</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Match a group, which is always the case.s</span>
+
+<span class="sd">            Returns the match state (True or False) and the new string i, that is the</span>
+<span class="sd">            number of matched characters in the string so far.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">nonlocal</span> <span class="n">str_i</span>
+            <span class="n">backtrack_stack</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># the children i&#39;m iterating, not to confuse with str_i</span>
+
+            <span class="c1"># the passed ast can&#39;t be a Leaf</span>
+            <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">):</span>
+                <span class="n">curr_node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+                <span class="c1"># if is OrNode I evaluate the sub-groups with a recursive call</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">OrNode</span><span class="p">):</span>
+                    <span class="n">before_str_i</span> <span class="o">=</span> <span class="n">str_i</span>
+                    <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">max</span>
+                    <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">consumed_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+                    <span class="n">backtracking</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">max_</span><span class="p">:</span>
+                        <span class="n">tmp_str_i</span> <span class="o">=</span> <span class="n">str_i</span>
+                        <span class="n">res</span><span class="p">,</span> <span class="n">new_str_i</span> <span class="o">=</span> <span class="n">match_group</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="n">curr_node</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">string</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                            <span class="n">curr_node</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">)</span> <span class="k">else</span> <span class="n">save_matches</span><span class="p">(</span><span class="n">match_group</span><span class="o">=</span><span class="n">match_group</span><span class="p">,</span> <span class="n">ast</span><span class="o">=</span><span class="n">curr_node</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">start_idx</span><span class="o">=</span><span class="n">str_i</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">str_i</span> <span class="o">=</span> <span class="n">tmp_str_i</span>
+                            <span class="n">res</span><span class="p">,</span> <span class="n">new_str_i</span> <span class="o">=</span> <span class="n">match_group</span><span class="p">(</span><span class="n">ast</span><span class="o">=</span><span class="n">curr_node</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">string</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                                <span class="n">curr_node</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">)</span> <span class="k">else</span> <span class="n">save_matches</span><span class="p">(</span><span class="n">match_group</span><span class="o">=</span><span class="n">match_group</span><span class="p">,</span> <span class="n">ast</span><span class="o">=</span><span class="n">curr_node</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">start_idx</span><span class="o">=</span><span class="n">str_i</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                            <span class="n">consumed_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_str_i</span> <span class="o">-</span> <span class="n">tmp_str_i</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">min_</span> <span class="o">&lt;=</span> <span class="n">j</span><span class="p">:</span>
+                            <span class="k">break</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
+                                <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
+                                <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
+                                <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
+                                <span class="n">backtracking</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>  <span class="c1"># retry to match the current node</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span>
+                        <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">backtracking</span><span class="p">:</span>
+                        <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">consumed_list</span><span class="p">))</span>
+                        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">):</span>
+                    <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">max</span>
+                    <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">consumed_list</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">before_str_i</span> <span class="o">=</span> <span class="n">str_i</span>
+
+                    <span class="n">backtracking</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">max_</span><span class="p">:</span>
+                        <span class="n">tmp_str_i</span> <span class="o">=</span> <span class="n">str_i</span>
+
+                        <span class="n">res</span><span class="p">,</span> <span class="n">new_str_i</span> <span class="o">=</span> <span class="n">save_matches</span><span class="p">(</span>
+                            <span class="n">match_group</span><span class="p">,</span> <span class="n">curr_node</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="n">str_i</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                            <span class="c1"># i must use tmp_str_i because str_i is changed by the match_group</span>
+                            <span class="c1"># call, so (new_str_i - str_i) would be always 0</span>
+                            <span class="n">consumed_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_str_i</span> <span class="o">-</span> <span class="n">tmp_str_i</span><span class="p">)</span>
+                            <span class="c1">#str_i = new_str_i</span>
+                        <span class="k">elif</span> <span class="n">min_</span> <span class="o">&lt;=</span> <span class="n">j</span><span class="p">:</span>
+                            <span class="c1"># i did the bare minimum or more</span>
+                            <span class="k">break</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
+                                <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
+                                <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
+                                <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
+                                <span class="n">backtracking</span> <span class="o">=</span> <span class="kc">True</span>
+                                <span class="k">break</span>  <span class="c1"># retry to match the current node</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span>
+                        <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="c1"># if NOT backtracking iterate the next element, and put the</span>
+                    <span class="c1"># current on the backtrack_stack, otherwise don&#39;t increment i, don&#39;t put on the</span>
+                    <span class="c1"># stack so to retry the current one (just continue)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">backtracking</span><span class="p">:</span>
+                        <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">consumed_list</span><span class="p">))</span>
+                        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="k">continue</span>
+
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">LeafNode</span><span class="p">):</span>
+                    <span class="c1"># it is a LeafNode obviously now</span>
+                    <span class="n">min_</span><span class="p">,</span> <span class="n">max_</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">max</span>
+                    <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+
+                    <span class="n">consumed_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+                    <span class="n">before_str_i</span> <span class="o">=</span> <span class="n">str_i</span>  <span class="c1"># to discard changes made in case i need to bt</span>
+
+                    <span class="n">backtracking</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">max_</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">str_i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>  <span class="c1"># i still have input to match</span>
+                            <span class="k">if</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">is_match</span><span class="p">(</span><span class="n">ch</span><span class="o">=</span><span class="n">string</span><span class="p">[</span><span class="n">str_i</span><span class="p">],</span> <span class="n">str_i</span><span class="o">=</span><span class="n">str_i</span><span class="p">,</span> <span class="n">str_len</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)):</span>
+                                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">StartElement</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">EndElement</span><span class="p">)):</span>
+                                    <span class="n">consumed_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                                    <span class="n">str_i</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">min_</span> <span class="o">&lt;=</span> <span class="n">j</span><span class="p">:</span>  <span class="c1"># I already met the minimum requirement for match</span>
+                                    <span class="k">break</span>
+                                <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
+                                    <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">before_str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
+                                    <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
+                                    <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
+                                    <span class="n">backtracking</span> <span class="o">=</span> <span class="kc">True</span>
+                                    <span class="k">break</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span>
+                        <span class="k">else</span><span class="p">:</span>  <span class="c1"># finished input</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">StartElement</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">EndElement</span><span class="p">)</span> <span class="ow">and</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">is_match</span><span class="p">(</span><span class="n">str_i</span><span class="o">=</span><span class="n">str_i</span><span class="p">,</span> <span class="n">str_len</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)):</span>
+                                <span class="k">pass</span>
+                            <span class="c1"># finished input w/o finishing the regex tree</span>
+                            <span class="k">elif</span> <span class="n">min_</span> <span class="o">&lt;=</span> <span class="n">j</span><span class="p">:</span>
+                                <span class="k">break</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="c1"># i have more states, but the input is finished</span>
+                                <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
+                                    <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">before_str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                                <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
+                                    <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
+                                    <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
+                                    <span class="n">backtracking</span> <span class="o">=</span> <span class="kc">True</span>
+                                    <span class="k">break</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span>
+                        <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">backtracking</span><span class="p">:</span>
+                        <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">consumed_list</span><span class="p">))</span>
+                        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span>
+
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">str_i</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="n">str_i</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">res</span><span class="p">,</span> <span class="n">consumed</span> <span class="o">=</span> <span class="n">save_matches</span><span class="p">(</span>
+                <span class="n">match_group</span><span class="o">=</span><span class="n">match_group</span><span class="p">,</span> <span class="n">ast</span><span class="o">=</span><span class="n">ast</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">start_idx</span><span class="o">=</span><span class="n">str_i</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">consumed</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="n">str_i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+            <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">save_matches</span><span class="p">(</span><span class="n">match_group</span><span class="o">=</span><span class="n">match_group</span><span class="p">,</span>
+                                  <span class="n">ast</span><span class="o">=</span><span class="n">ast</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">start_idx</span><span class="o">=</span><span class="n">str_i</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">str_i</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">str_i</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pyregexp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Lorenzo Felletti.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
