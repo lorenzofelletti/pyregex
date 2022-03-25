@@ -32,17 +32,17 @@ def test_or(reng: RegexEngine):
 
 
 def test_or_no_match(reng: RegexEngine):
-    res, consumed = reng.match('^a|b$', 'c')
+    res, _ = reng.match('^a|b$', 'c')
     assert res == False
 
 
 def test_or_no_match_with_bt(reng: RegexEngine):
-    res, consumed = reng.match('a|b', 'c')
+    res, _ = reng.match('a|b', 'c')
     assert res == False
 
 
 def test_bt_no_match(reng: RegexEngine):
-    res, consumed = reng.match('a{5}a', 'aaaaa')
+    res, _ = reng.match('a{5}a', 'aaaaa')
     assert res == False
 
 
@@ -52,71 +52,71 @@ def test_match_group_zero_or_more(reng: RegexEngine):
 
 
 def test_fail_group_one_or_more(reng: RegexEngine):
-    res, cons = reng.match('^(a)+', 'b')
+    res, _ = reng.match('^(a)+', 'b')
     assert res == False
 
 
 def test_complex_match(reng: RegexEngine):
-    res, cons = reng.match('^(a|b+c)?[n-z]{2}', 'axx')
+    res, _ = reng.match('^(a|b+c)?[n-z]{2}', 'axx')
     assert res == True
 
 
 def test_complex_match_2(reng: RegexEngine):
-    res, cons = reng.match('^(a|b+c)?[n-z]{2}', 'xx')
+    res, _ = reng.match('^(a|b+c)?[n-z]{2}', 'xx')
     assert res == True
 
 
 def test_match_mail_simple(reng: RegexEngine):
-    res, cons = reng.match(r'.*@.*\.(com|it)', 'vr@gmail.com')
+    res, _ = reng.match(r'.*@.*\.(com|it)', 'vr@gmail.com')
     assert res == True
 
 
 def test_bt_index_leaf(reng: RegexEngine):
-    res, cons = reng.match(r'^aaaa.*a$', 'aaaaa')
+    res, _ = reng.match(r'^aaaa.*a$', 'aaaaa')
     assert res == True
 
 
 def test_bt_index_or(reng: RegexEngine):
-    res, cons = reng.match(r'^x(a|b)?bc$', 'xbc')
+    res, _ = reng.match(r'^x(a|b)?bc$', 'xbc')
     assert res == True
 
 
 def test_bt_index_group(reng: RegexEngine):
-    res, cons = reng.match(r'^x(a)?ac$', 'xac')
+    res, _ = reng.match(r'^x(a)?ac$', 'xac')
     assert res == True
 
 
 def test_match_or_left(reng: RegexEngine):
-    res, cons = reng.match('na|nb', 'na')
+    res, _ = reng.match('na|nb', 'na')
     assert res == True
 
 
 def test_match_or_right(reng: RegexEngine):
-    res, cons = reng.match('na|nb', 'nb')
+    res, _ = reng.match('na|nb', 'nb')
     assert res == True
 
 
 def test_match_or_right_at_start_end(reng: RegexEngine):
-    res, cons = reng.match('^na|nb$', 'nb')
+    res, _ = reng.match('^na|nb$', 'nb')
     assert res == True
 
 
 def test_no_match_after_end(reng: RegexEngine):
-    res, cons = reng.match('^na|nb$', 'nb ')
+    res, _ = reng.match('^na|nb$', 'nb ')
     assert res == False
 
 
 def test_match_sequence_with_start_end_correctly(reng: RegexEngine):
-    res, cons = reng.match('^a|b$', 'a  ')
+    res, _ = reng.match('^a|b$', 'a  ')
     assert res == True
 
-    res, cons = reng.match('^a|b$', ' a  ')
+    res, _ = reng.match('^a|b$', ' a  ')
     assert res == False
 
-    res, cons = reng.match('^a|b$', '  b')
+    res, _ = reng.match('^a|b$', '  b')
     assert res == True
 
-    res, cons = reng.match('^a|b$', '  b ')
+    res, _ = reng.match('^a|b$', '  b ')
     assert res == False
 
 
@@ -444,8 +444,39 @@ def test_ignore_case_casefolding(reng: RegexEngine):
 def test_empty_regex(reng: RegexEngine):
     regex = r""
     test_str = "aaaa"
+
+    # repeate the test with different optional parameters configurations
     res, _ = reng.match(regex, test_str)
     assert res == True
+
+    res, _ = reng.match(regex, test_str, ignore_case=1)
+    assert res == True
+
+    res, _ = reng.match(regex, test_str, ignore_case=2)
+    assert res == True
+
+    res, _ = reng.match(regex, test_str, continue_after_match=True)
+    assert res == True
+
+    res, _, matches = reng.match(regex, test_str, return_matches=True)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 0
+
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 0
+
+    res, _, matches = reng.match(regex, test_str, True, True, 1)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 0
+
+    res, _, matches = reng.match(regex, test_str, True, True, 2)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 0
 
 
 def test_empty_test_str(reng: RegexEngine):
@@ -460,3 +491,41 @@ def test_empty_regex_and_test_str(reng: RegexEngine):
     test_str = ""
     res, _ = reng.match(regex, test_str)
     assert res == True
+
+
+def test_regex_with_rigth_empty_group(reng: RegexEngine):
+    regex = r"a|"
+    test_str = "ab"
+
+    # repeate the test with different optional parameters configurations
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+    res, _ = reng.match(regex, test_str, ignore_case=1)
+    assert res == True
+
+    res, _ = reng.match(regex, test_str, ignore_case=2)
+    assert res == True
+
+    res, _ = reng.match(regex, test_str, continue_after_match=True)
+    assert res == True
+
+    res, _, matches = reng.match(regex, test_str, return_matches=True)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "a" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
+
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "a" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
+
+    res, _, matches = reng.match(regex, test_str, True, True, 1)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "a" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
+
+    res, _, matches = reng.match(regex, test_str, True, True, 2)
+    assert res == True
+    assert len(matches) == 1 and len(matches[0]) == 1
+    assert matches[0][0].match == "a" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
