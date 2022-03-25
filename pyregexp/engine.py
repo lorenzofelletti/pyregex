@@ -60,40 +60,40 @@ class RegexEngine:
             positions all the group and subgroups matched. 
         """
 
-        def return_fnc(res: bool, str_i: int, all_matches: list, return_matches: bool) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
+        def return_fnc(res: bool, consumed: int, all_matches: list, return_matches: bool) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
             """ If return_matches is True returns the matches."""
             if return_matches:
-                return res, str_i, all_matches
+                return res, consumed, all_matches
             else:
-                return res, str_i
+                return res, consumed
 
         if ignore_case == 1:
             re = unicodedata.normalize("NFKD", re).lower()
             string = unicodedata.normalize("NFKD", string).casefold()
         elif ignore_case == 2:
-           re = unicodedata.normalize("NFKD", re).casefold()
-           string = unicodedata.normalize("NFKD", string).casefold()
+            re = unicodedata.normalize("NFKD", re).casefold()
+            string = unicodedata.normalize("NFKD", string).casefold()
 
         all_matches = []  # variables holding the matched groups list for each matched substring in the test string
-        highest_matched_idx = 0  # holds the highest test_str index matched
+        highest_matched_idx = 0  # holds the highest matched string's index
 
-        res, str_i, matches = self.__match__(re, string, 0)
+        res, consumed, matches = self.__match__(re, string, 0)
         if res:
-            highest_matched_idx = str_i
+            highest_matched_idx = consumed
             all_matches.append(matches)
         else:
             return return_fnc(res, highest_matched_idx, all_matches, return_matches)
 
-        if not continue_after_match:
+        if not continue_after_match or not consumed > 0:
             return return_fnc(res, highest_matched_idx, all_matches, return_matches)
 
         while True:
-            #string = string[str_i:]
-            if not len(string) > 0:
-                return return_fnc(res, highest_matched_idx, all_matches, return_matches)
-            res, str_i, matches = self.__match__(re, string, str_i)
-            if res:
-                highest_matched_idx = str_i
+            res, consumed, matches = self.__match__(re, string, consumed)
+
+            # if consumed is not grater than highest_matched_idx this means the new match
+            # consumed 0 characters, so there is really nothing more to match
+            if res and consumed > highest_matched_idx:
+                highest_matched_idx = consumed
                 all_matches.append(matches)
             else:
                 return return_fnc(True, highest_matched_idx, all_matches, return_matches)
