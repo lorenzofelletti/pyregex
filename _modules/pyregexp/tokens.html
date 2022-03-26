@@ -188,10 +188,9 @@
 
 
 <div class="viewcode-block" id="Token"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Token">[docs]</a><span class="k">class</span> <span class="nc">Token</span><span class="p">:</span>
-    <span class="sd">""" Tokens base class."""</span>
+    <span class="sd">""" Token base class."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">''</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">''</span>
     <span class="k">pass</span></div>
 
@@ -201,27 +200,22 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'element'</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">char</span></div>
 
 
 <div class="viewcode-block" id="WildcardToken"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.WildcardToken">[docs]</a><span class="k">class</span> <span class="nc">WildcardToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Token of a wildcard."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wildcard_ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'wildcard'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">wildcard_ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">wildcard_ch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">wildcard_ch</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">char</span></div>
 
 
 <div class="viewcode-block" id="SpaceToken"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.SpaceToken">[docs]</a><span class="k">class</span> <span class="nc">SpaceToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Token of a space."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">space_ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'space'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">space_char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">space_ch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">whitespace</span></div>
 
 
@@ -229,41 +223,37 @@
     <span class="sd">""" Token using '.' as wildcard."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">wildcard_ch</span><span class="o">=</span><span class="s1">'.'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'.'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StartToken"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.StartToken">[docs]</a><span class="k">class</span> <span class="nc">StartToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Token of match start."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'start'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">start_ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">start_ch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">start_ch</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">char</span></div>
 
 
 <div class="viewcode-block" id="Start"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Start">[docs]</a><span class="k">class</span> <span class="nc">Start</span><span class="p">(</span><span class="n">StartToken</span><span class="p">):</span>
     <span class="sd">""" Token using '^' to match start."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">start_ch</span><span class="o">=</span><span class="s1">'^'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'^'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="EndToken"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.EndToken">[docs]</a><span class="k">class</span> <span class="nc">EndToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Token of match end."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end_ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'end'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">end_ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">end_ch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">end_ch</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">char</span></div>
 
 
 <div class="viewcode-block" id="End"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.End">[docs]</a><span class="k">class</span> <span class="nc">End</span><span class="p">(</span><span class="n">EndToken</span><span class="p">):</span>
     <span class="sd">""" Token using '$' to match end."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">end_ch</span><span class="o">=</span><span class="s1">'$'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'$'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Escape"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Escape">[docs]</a><span class="k">class</span> <span class="nc">Escape</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
@@ -271,8 +261,6 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'escape'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">escape_char</span> <span class="o">=</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">'</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">'</span></div>
 
 
@@ -281,24 +269,21 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'comma'</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">','</span></div>
 
 
 <div class="viewcode-block" id="Parenthesis"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Parenthesis">[docs]</a><span class="k">class</span> <span class="nc">Parenthesis</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Token of a parenthesis."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'parenthesis'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">side</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"L"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">]</span> <span class="o">=</span> <span class="n">side</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="LeftParenthesis"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.LeftParenthesis">[docs]</a><span class="k">class</span> <span class="nc">LeftParenthesis</span><span class="p">(</span><span class="n">Parenthesis</span><span class="p">):</span>
     <span class="sd">""" Left parenthesis token."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s1">'L'</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">'('</span></div>
 
 
@@ -306,24 +291,22 @@
     <span class="sd">""" Right parenthesis token."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s1">'R'</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">')'</span></div>
 
 
 <div class="viewcode-block" id="CurlyBrace"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.CurlyBrace">[docs]</a><span class="k">class</span> <span class="nc">CurlyBrace</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Curly brace token."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'curly'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">side</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"L"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">]</span> <span class="o">=</span> <span class="n">side</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="LeftCurlyBrace"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.LeftCurlyBrace">[docs]</a><span class="k">class</span> <span class="nc">LeftCurlyBrace</span><span class="p">(</span><span class="n">CurlyBrace</span><span class="p">):</span>
     <span class="sd">""" Left curly brace token."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s1">'L'</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">'{'</span></div>
 
 
@@ -331,24 +314,22 @@
     <span class="sd">""" Right curly brace token."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s1">'R'</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">'}'</span></div>
 
 
 <div class="viewcode-block" id="Bracket"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Bracket">[docs]</a><span class="k">class</span> <span class="nc">Bracket</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Brackets token."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'bracket'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">side</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"L"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">]</span> <span class="o">=</span> <span class="n">side</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="LeftBracket"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.LeftBracket">[docs]</a><span class="k">class</span> <span class="nc">LeftBracket</span><span class="p">(</span><span class="n">Bracket</span><span class="p">):</span>
     <span class="sd">""" Left bracke token."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s1">'L'</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">'['</span></div>
 
 
@@ -356,95 +337,88 @@
     <span class="sd">""" Right bracket token."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s1">'R'</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">']'</span></div>
 
 
 <div class="viewcode-block" id="Quantifier"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Quantifier">[docs]</a><span class="k">class</span> <span class="nc">Quantifier</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Quantifier token."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">qtifier_char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'qtifier'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">quantity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">qtifier_char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">qtifier_char</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">qtifier_char</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">char</span></div>
 
 
 <div class="viewcode-block" id="ZeroOrMore"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.ZeroOrMore">[docs]</a><span class="k">class</span> <span class="nc">ZeroOrMore</span><span class="p">(</span><span class="n">Quantifier</span><span class="p">):</span>
     <span class="sd">""" Quantifier 'zero or more' token."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qtifier_char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">quantity</span><span class="o">=</span><span class="s1">'zeroOrMore'</span><span class="p">,</span> <span class="n">qtifier_char</span><span class="o">=</span><span class="n">qtifier_char</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">char</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="OneOrMore"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.OneOrMore">[docs]</a><span class="k">class</span> <span class="nc">OneOrMore</span><span class="p">(</span><span class="n">Quantifier</span><span class="p">):</span>
     <span class="sd">""" Quantifier 'one or more' token."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qtifier_char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">quantity</span><span class="o">=</span><span class="s1">'oneOrMore'</span><span class="p">,</span> <span class="n">qtifier_char</span><span class="o">=</span><span class="n">qtifier_char</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">char</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ZeroOrOne"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.ZeroOrOne">[docs]</a><span class="k">class</span> <span class="nc">ZeroOrOne</span><span class="p">(</span><span class="n">Quantifier</span><span class="p">):</span>
     <span class="sd">""" Quantifier 'zero or one' token."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qtifier_char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">quantity</span><span class="o">=</span><span class="s1">'zeroOrOne'</span><span class="p">,</span> <span class="n">qtifier_char</span><span class="o">=</span><span class="n">qtifier_char</span><span class="p">)</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">char</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Asterisk"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Asterisk">[docs]</a><span class="k">class</span> <span class="nc">Asterisk</span><span class="p">(</span><span class="n">ZeroOrMore</span><span class="p">):</span>
     <span class="sd">""" Quantifier 'zero or more' token using character '*'."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qtifier_char</span><span class="o">=</span><span class="s1">'*'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'*'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Plus"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Plus">[docs]</a><span class="k">class</span> <span class="nc">Plus</span><span class="p">(</span><span class="n">OneOrMore</span><span class="p">):</span>
     <span class="sd">""" Quantifier 'one or more' token using character '+'."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qtifier_char</span><span class="o">=</span><span class="s1">'+'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'+'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="QuestionMark"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.QuestionMark">[docs]</a><span class="k">class</span> <span class="nc">QuestionMark</span><span class="p">(</span><span class="n">ZeroOrOne</span><span class="p">):</span>
     <span class="sd">""" Quantifier 'zero or one' token using character '?'."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">qtifier_char</span><span class="o">=</span><span class="s1">'?'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'?'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="OrToken"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.OrToken">[docs]</a><span class="k">class</span> <span class="nc">OrToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Token of the or."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">or_ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'or'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">or_ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">or_ch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">or_ch</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">char</span></div>
 
 
 <div class="viewcode-block" id="VerticalBar"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.VerticalBar">[docs]</a><span class="k">class</span> <span class="nc">VerticalBar</span><span class="p">(</span><span class="n">OrToken</span><span class="p">):</span>
     <span class="sd">""" Token of the or using '|'."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">or_ch</span><span class="o">=</span><span class="s1">'|'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'|'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NotToken"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.NotToken">[docs]</a><span class="k">class</span> <span class="nc">NotToken</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
     <span class="sd">""" Token of the negation."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">not_ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'not'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">not_ch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">not_ch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">not_ch</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">char</span></div>
 
 
 <div class="viewcode-block" id="Circumflex"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Circumflex">[docs]</a><span class="k">class</span> <span class="nc">Circumflex</span><span class="p">(</span><span class="n">NotToken</span><span class="p">):</span>
     <span class="sd">""" Token of the negation using '^'."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">not_ch</span><span class="o">=</span><span class="s1">'^'</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'^'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Dash"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.tokens.Dash">[docs]</a><span class="k">class</span> <span class="nc">Dash</span><span class="p">(</span><span class="n">Token</span><span class="p">):</span>
@@ -452,8 +426,6 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">'dash'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ch</span> <span class="o">=</span> <span class="s1">'-'</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="s1">'-'</span></div>
 </pre></div>
         </article>

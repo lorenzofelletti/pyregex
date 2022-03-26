@@ -195,7 +195,8 @@
 <span class="sd">"""</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Deque</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
 <span class="kn">import</span> <span class="nn">unicodedata</span>
 <span class="kn">from</span> <span class="nn">.pyrser</span> <span class="kn">import</span> <span class="n">Pyrser</span>
 <span class="kn">from</span> <span class="nn">.match</span> <span class="kn">import</span> <span class="n">Match</span>
@@ -259,8 +260,9 @@
             <span class="n">re</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFKD"</span><span class="p">,</span> <span class="n">re</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
             <span class="n">string</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFKD"</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
 
-        <span class="n">all_matches</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># variables holding the matched groups list for each matched substring in the test string</span>
-        <span class="n">highest_matched_idx</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># holds the highest matched string's index</span>
+        <span class="c1"># variables holding the matched groups list for each matched substring in the test string</span>
+        <span class="n">all_matches</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">highest_matched_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># holds the highest matched string's index</span>
 
         <span class="n">res</span><span class="p">,</span> <span class="n">consumed</span><span class="p">,</span> <span class="n">matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__match__</span><span class="p">(</span><span class="n">re</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
@@ -286,8 +288,8 @@
     <span class="k">def</span> <span class="nf">__match__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start_str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]]:</span>
         <span class="sd">""" Same as match, but always returns after the first match."""</span>
         <span class="n">ast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">re</span><span class="o">=</span><span class="n">re</span><span class="p">)</span>
-        <span class="n">matches</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]</span>
-        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">matches</span><span class="p">:</span> <span class="n">Deque</span><span class="p">[</span><span class="n">Match</span><span class="p">]</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
 
         <span class="c1"># str_i represents the matched characters so far. It is inizialized to</span>
         <span class="c1"># the value of the input parameter start_str_i because the match could</span>
@@ -299,67 +301,7 @@
         <span class="k">def</span> <span class="nf">return_fnc</span><span class="p">(</span><span class="n">res</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Match</span><span class="p">]]:</span>
             <span class="sd">""" Returns the Tuple to be returned by __match__."""</span>
             <span class="k">nonlocal</span> <span class="n">matches</span>
-            <span class="c1"># reverses the list so the last match (the "whole" match) is first</span>
-            <span class="n">matches</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">matches</span>
-
-        <span class="k">def</span> <span class="nf">backtrack</span><span class="p">(</span><span class="n">backtrack_stack</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span> <span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">curr_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-            <span class="sd">""" Returns whether it is possible to backtrack and the state to backtrack to.</span>
-
-<span class="sd">            Takes as input the current state of the engine and returns whether</span>
-<span class="sd">            or not it is possible to backtrack.</span>
-
-<span class="sd">            Args:</span>
-<span class="sd">                backtrack_stack (List[Tuple[int, int, int, List[int]]]): the</span>
-<span class="sd">                current backtrack_stack situation. The Tuple values represents,</span>
-<span class="sd">                in order from left to right, the node index of the entry in its</span>
-<span class="sd">                parent children list, the minimum times that node must be</span>
-<span class="sd">                matched, the time it is matched in the current state, the list</span>
-<span class="sd">                of consumed character each times it was matched</span>
-<span class="sd">                str_i (int): the current considered index of the test string</span>
-<span class="sd">                curr_i (int): the index of the GroupNode children considered</span>
-
-<span class="sd">            Returns:</span>
-<span class="sd">                A Tuple containing a bool, True if it is possible to backtrack,</span>
-<span class="sd">                the new string index, and the new node children index to which</span>
-<span class="sd">                backtrack to. Note that the last two parameters only have a</span>
-<span class="sd">                meaning in the case it is possible to backtrack (the bool is</span>
-<span class="sd">                True).</span>
-<span class="sd">            """</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">backtrack_stack</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">curr_i</span>
-
-            <span class="c1"># the fist step is to pop the last tuple from the backtrack_stack</span>
-            <span class="n">node_i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">matched_times</span><span class="p">,</span> <span class="n">consumed_list</span> <span class="o">=</span> <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-
-            <span class="k">if</span> <span class="n">matched_times</span> <span class="o">==</span> <span class="n">min_</span><span class="p">:</span>
-                <span class="c1"># if a node is already matched the minimum number of times, the</span>
-                <span class="c1"># chance you have to potentially be able to backtrack is to is</span>
-                <span class="c1"># to delete the entry from the stack and then search for a new</span>
-                <span class="c1"># possibility (recursively calling this function).</span>
-                <span class="c1"># But, before the recursion, you have to calculate  what the</span>
-                <span class="c1"># string index (str_i) value was before the node was matched</span>
-                <span class="c1"># even once. Thus, you have to decrease the string index</span>
-                <span class="c1"># of each consumption in the consumed_list.</span>
-
-                <span class="c1"># calculate_the new str_i</span>
-                <span class="k">for</span> <span class="n">consumption</span> <span class="ow">in</span> <span class="n">consumed_list</span><span class="p">:</span>
-                    <span class="n">str_i</span> <span class="o">-=</span> <span class="n">consumption</span>
-                <span class="c1"># recursive call</span>
-                <span class="k">return</span> <span class="n">backtrack</span><span class="p">(</span><span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">node_i</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># the node was matched more times than its min, so you just</span>
-                <span class="c1"># need to remove the last consumption from the list,</span>
-                <span class="c1"># decrease the str_i by that amount, decrease the times the node</span>
-                <span class="c1"># was matched - matched_times - by 1, and then append the stack</span>
-                <span class="c1"># the tuple with the new matched_times and consumed_list.</span>
-                <span class="n">last_consumed</span> <span class="o">=</span> <span class="n">consumed_list</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-                <span class="n">new_str_i</span> <span class="o">=</span> <span class="n">str_i</span> <span class="o">-</span> <span class="n">last_consumed</span>
-                <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">(</span><span class="n">node_i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">matched_times</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">consumed_list</span><span class="p">))</span>
-                <span class="c1"># lastly, you return that the backtracking is possible, and</span>
-                <span class="c1"># the state to which backtrack to.</span>
-                <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">new_str_i</span><span class="p">,</span> <span class="n">curr_i</span>
+            <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">save_matches</span><span class="p">(</span><span class="n">match_group</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ast</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">RE</span><span class="p">,</span> <span class="n">GroupNode</span><span class="p">],</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
             <span class="sd">""" Save the matches of capturing groups.</span>
@@ -383,7 +325,7 @@
                     <span class="k">if</span> <span class="n">matches</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">group_id</span> <span class="o">==</span> <span class="n">ast</span><span class="o">.</span><span class="n">group_id</span><span class="p">:</span>
                         <span class="n">matches</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">matches</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
                         <span class="k">break</span>
-                <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">matches</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span>
                     <span class="n">Match</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">group_id</span><span class="p">,</span> <span class="n">start_idx</span><span class="p">,</span> <span class="n">end_idx</span><span class="p">,</span> <span class="n">string</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">group_name</span><span class="p">))</span>
 
             <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">end_idx</span>
@@ -396,7 +338,68 @@
 <span class="sd">            number of matched characters in the string so far.</span>
 <span class="sd">            '''</span>
             <span class="k">nonlocal</span> <span class="n">str_i</span>
-            <span class="n">backtrack_stack</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">backtrack_stack</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">def</span> <span class="nf">backtrack</span><span class="p">(</span><span class="n">str_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">curr_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+                <span class="sd">""" Returns whether it is possible to backtrack and the state to backtrack to.</span>
+
+<span class="sd">                Takes as input the current state of the engine and returns whether</span>
+<span class="sd">                or not it is possible to backtrack.</span>
+
+<span class="sd">                Args:</span>
+<span class="sd">                    backtrack_stack (List[Tuple[int, int, int, List[int]]]): the</span>
+<span class="sd">                    current backtrack_stack situation. The Tuple values represents,</span>
+<span class="sd">                    in order from left to right, the node index of the entry in its</span>
+<span class="sd">                    parent children list, the minimum times that node must be</span>
+<span class="sd">                    matched, the time it is matched in the current state, the list</span>
+<span class="sd">                    of consumed character each times it was matched</span>
+<span class="sd">                    str_i (int): the current considered index of the test string</span>
+<span class="sd">                    curr_i (int): the index of the GroupNode children considered</span>
+
+<span class="sd">                Returns:</span>
+<span class="sd">                    A Tuple containing a bool, True if it is possible to backtrack,</span>
+<span class="sd">                    the new string index, and the new node children index to which</span>
+<span class="sd">                    backtrack to. Note that the last two parameters only have a</span>
+<span class="sd">                    meaning in the case it is possible to backtrack (the bool is</span>
+<span class="sd">                    True).</span>
+<span class="sd">                """</span>
+                <span class="k">nonlocal</span> <span class="n">backtrack_stack</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">backtrack_stack</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">curr_i</span>
+
+                <span class="c1"># the fist step is to pop the last tuple from the backtrack_stack</span>
+                <span class="n">node_i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">matched_times</span><span class="p">,</span> <span class="n">consumed_list</span> <span class="o">=</span> <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="n">matched_times</span> <span class="o">==</span> <span class="n">min_</span><span class="p">:</span>
+                    <span class="c1"># if a node is already matched the minimum number of times, the</span>
+                    <span class="c1"># chance you have to potentially be able to backtrack is to is</span>
+                    <span class="c1"># to delete the entry from the stack and then search for a new</span>
+                    <span class="c1"># possibility (recursively calling this function).</span>
+                    <span class="c1"># But, before the recursion, you have to calculate  what the</span>
+                    <span class="c1"># string index (str_i) value was before the node was matched</span>
+                    <span class="c1"># even once. Thus, you have to decrease the string index</span>
+                    <span class="c1"># of each consumption in the consumed_list.</span>
+
+                    <span class="c1"># calculate_the new str_i</span>
+                    <span class="k">for</span> <span class="n">consumption</span> <span class="ow">in</span> <span class="n">consumed_list</span><span class="p">:</span>
+                        <span class="n">str_i</span> <span class="o">-=</span> <span class="n">consumption</span>
+                    <span class="c1"># recursive call</span>
+                    <span class="k">return</span> <span class="n">backtrack</span><span class="p">(</span><span class="n">str_i</span><span class="p">,</span> <span class="n">node_i</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># the node was matched more times than its min, so you just</span>
+                    <span class="c1"># need to remove the last consumption from the list,</span>
+                    <span class="c1"># decrease the str_i by that amount, decrease the times the node</span>
+                    <span class="c1"># was matched - matched_times - by 1, and then append the stack</span>
+                    <span class="c1"># the tuple with the new matched_times and consumed_list.</span>
+                    <span class="n">last_consumed</span> <span class="o">=</span> <span class="n">consumed_list</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                    <span class="n">new_str_i</span> <span class="o">=</span> <span class="n">str_i</span> <span class="o">-</span> <span class="n">last_consumed</span>
+                    <span class="n">backtrack_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">node_i</span><span class="p">,</span> <span class="n">min_</span><span class="p">,</span> <span class="n">matched_times</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">consumed_list</span><span class="p">))</span>
+                    <span class="c1"># lastly, you return that the backtracking is possible, and</span>
+                    <span class="c1"># the state to which backtrack to.</span>
+                    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">new_str_i</span><span class="p">,</span> <span class="n">curr_i</span>
+
             <span class="n">curr_node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># the children i'm iterating, not to confuse with str_i</span>
 
@@ -428,8 +431,7 @@
                         <span class="k">elif</span> <span class="n">min_</span> <span class="o">&lt;=</span> <span class="n">j</span><span class="p">:</span>
                             <span class="k">break</span>
                         <span class="k">else</span><span class="p">:</span>
-                            <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
-                                <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                            <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span><span class="n">str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
                             <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
                                 <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
                                 <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
@@ -465,8 +467,7 @@
                             <span class="c1"># i did the bare minimum or more</span>
                             <span class="k">break</span>
                         <span class="k">else</span><span class="p">:</span>
-                            <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
-                                <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                            <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span><span class="n">str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
                             <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
                                 <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
                                 <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
@@ -506,7 +507,7 @@
                                 <span class="k">if</span> <span class="n">min_</span> <span class="o">&lt;=</span> <span class="n">j</span><span class="p">:</span>  <span class="c1"># I already met the minimum requirement for match</span>
                                     <span class="k">break</span>
                                 <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
-                                    <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">before_str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                                    <span class="n">before_str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
                                 <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
                                     <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
                                     <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
@@ -523,7 +524,7 @@
                             <span class="k">else</span><span class="p">:</span>
                                 <span class="c1"># i have more states, but the input is finished</span>
                                 <span class="n">can_bt</span><span class="p">,</span> <span class="n">bt_str_i</span><span class="p">,</span> <span class="n">bt_i</span> <span class="o">=</span> <span class="n">backtrack</span><span class="p">(</span>
-                                    <span class="n">backtrack_stack</span><span class="p">,</span> <span class="n">before_str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                                    <span class="n">before_str_i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
                                 <span class="k">if</span> <span class="n">can_bt</span><span class="p">:</span>
                                     <span class="n">i</span> <span class="o">=</span> <span class="n">bt_i</span>
                                     <span class="n">str_i</span> <span class="o">=</span> <span class="n">bt_str_i</span>
@@ -556,7 +557,7 @@
             <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">str_i</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">matches</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
                 <span class="n">str_i</span> <span class="o">=</span> <span class="n">i</span>
         <span class="k">return</span> <span class="n">return_fnc</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">str_i</span><span class="p">)</span></div>
 </pre></div>

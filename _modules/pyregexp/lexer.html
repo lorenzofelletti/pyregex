@@ -228,7 +228,7 @@
                     <span class="n">append</span><span class="p">(</span><span class="n">ElementToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">'s'</span><span class="p">:</span>
                     <span class="c1"># \s matches a space character</span>
-                    <span class="n">append</span><span class="p">(</span><span class="n">SpaceToken</span><span class="p">(</span><span class="n">space_ch</span><span class="o">=</span><span class="n">ch</span><span class="p">))</span>
+                    <span class="n">append</span><span class="p">(</span><span class="n">SpaceToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">ch</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">append</span><span class="p">(</span><span class="n">ElementToken</span><span class="p">(</span><span class="n">char</span><span class="o">=</span><span class="n">ch</span><span class="p">))</span>
             <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">:</span>
@@ -260,7 +260,7 @@
                         <span class="n">append</span><span class="p">(</span><span class="n">RightCurlyBrace</span><span class="p">())</span>
                         <span class="k">break</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">'Bad token at index $</span><span class="si">{}</span><span class="s1">.'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">"Bad token at index $</span><span class="si">{}</span><span class="s2">."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
                     <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">'^'</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
