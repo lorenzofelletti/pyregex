@@ -68,7 +68,8 @@ class Pyrser:
                 next_tkn()
                 match_start = True
 
-            node = parse_group(capturing=capturing, group_name=group_name, group_id=group_id)
+            node = parse_group(capturing=capturing,
+                               group_name=group_name, group_id=group_id)
 
             if isinstance(curr_tkn, EndToken):
                 next_tkn()
@@ -119,7 +120,6 @@ class Pyrser:
                     parse_curly(new_el)
 
                 elements.append(new_el)
-                # next_tkn()
 
             return GroupNode(children=elements, capturing=capturing, group_name=group_name, group_id=group_id)
 
@@ -139,13 +139,13 @@ class Pyrser:
                     val_1 = int(val_1)
 
                 if isinstance(curr_tkn, RightCurlyBrace):
-                    # I'm in the case {exact}
+                    # case {exact}
                     if type(val_1) is int:
                         new_el.min, new_el.max = val_1, val_1
                         next_tkn()  # skip the closing brace
                         return
                     else:
-                        raise Exception()
+                        raise Exception("Invalid curly brace syntax.")
 
                 next_tkn()
                 while isinstance(curr_tkn, ElementToken):
@@ -156,14 +156,13 @@ class Pyrser:
                 else:
                     val_2 = int(val_2)
 
-                # skip the closing brace
-                next_tkn()
+                next_tkn()  # skip the closing brace
 
                 new_el.min = val_1 if type(val_1) is int else 0
                 new_el.max = val_2 if type(val_2) is int else math.inf
 
             except Exception as e:
-                raise Exception('Invalid curly brace syntax.')
+                raise Exception("Invalid curly brace syntax.")
 
         def parse_range_el() -> ASTNode:
             if isinstance(curr_tkn, LeftBracket):
@@ -173,17 +172,17 @@ class Pyrser:
                     return element
                 else:
                     raise Exception(
-                        'Missing closing \']\'. Check the regex and try again.')
+                        "Missing closing ']'.")
             else:
                 return parse_el()
 
         def parse_inner_el() -> RangeElement:
+            # parse_inner_el creates a single RangeElement with all the matches
             nonlocal curr_tkn
-            # innerel creates a single RangeElement with all the matches
             match_str = ''
             if curr_tkn is None:
                 raise Exception(
-                    "Missing closing ']'. Check the regex and try again.")
+                    "Missing closing ']'.")
 
             positive_logic = True
             if isinstance(curr_tkn, NotToken):
@@ -205,8 +204,7 @@ class Pyrser:
                     curr_tkn = ElementToken(char=curr_tkn.char)
 
                 if next_tkn(without_consuming=True) is None:
-                    raise Exception(
-                        "Missing closing ']'. Check the regex and try again.")
+                    raise Exception("Missing closing ']'.")
                 elif isinstance(next_tkn(without_consuming=True), Dash):
                     # it may be a range (like a-z, A-M, 0-9, ...)
                     prev_char = curr_tkn.char
@@ -219,8 +217,7 @@ class Pyrser:
                         # we're in the case of an actual range (or next_tkn is none)
                         next_tkn()  # curr_tkn is now the one after the dash
                         if next_tkn is None:
-                            raise Exception(
-                                "Missing closing ']'. Check the regex and try again.")
+                            raise Exception("Missing closing ']'.")
                         elif ord(prev_char) > ord(curr_tkn.char):
                             raise Exception(
                                 f"Range values reversed. Start '{prev_char}' char code is greater than end '{curr_tkn.char}' char code.")
@@ -257,31 +254,31 @@ class Pyrser:
                         group_name = parse_group_name()
                     else:
                         if curr_tkn is None:
-                            raise Exception('Unterminated group')
+                            raise Exception("Unterminated group.")
                         else:
                             raise Exception(
-                                f'Invalid group: \'{LeftParenthesis()}{QuestionMark()}{curr_tkn.char}\'')
+                                f"Invalid group: '{{?{curr_tkn.char}'.")
                 res = parse_re_seq(capturing=capturing, group_name=group_name)
                 if isinstance(curr_tkn, RightParenthesis):
-                    # next_tkn() not needed (the parse_group while loop will eat the parenthesis)
+                    # next_tkn() not needed (parse_group's while loop will eat the parenthesis)
                     return res
                 else:
-                    raise Exception('Missing closing group parenthesis \')\'')
+                    raise Exception("Missing closing group parenthesis ')'.")
             else:
                 raise Exception(
-                    'Unescaped special character {}'.format(curr_tkn.char))
+                    "Unescaped special character {}.".format(curr_tkn.char))
 
         def parse_group_name() -> str:
             if curr_tkn is None:
-                raise Exception('Unterminated named group name.')
+                raise Exception("Unterminated named group name.")
             group_name = ''
             while curr_tkn.char != '>':
                 group_name += curr_tkn.char
                 next_tkn()
                 if curr_tkn is None:
-                    raise Exception('Unterminated named group name.')
+                    raise Exception("Unterminated named group name.")
             if len(group_name) == 0:
-                raise Exception('Unexpected empty named group name.')
+                raise Exception("Unexpected empty named group name.")
             next_tkn()  # consumes '>'
             return group_name
 
@@ -294,5 +291,5 @@ class Pyrser:
         ast = parse_re()
         if curr_tkn is not None:
             raise Exception(
-                "Unable to parse the entire regex.\nCheck the regex and try again.")
+                "Unable to parse the regex.")
         return ast

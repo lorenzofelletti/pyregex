@@ -3,10 +3,9 @@ from typing import Literal
 
 
 class Token:
-    """ Tokens base class."""
+    """ Token base class."""
 
     def __init__(self) -> None:
-        self.type: str = ''
         self.char: str = ''
     pass
 
@@ -16,27 +15,22 @@ class ElementToken(Token):
 
     def __init__(self, char: str):
         super().__init__()
-        self.type = 'element'
         self.char: str = char
 
 
 class WildcardToken(Token):
     """ Token of a wildcard."""
 
-    def __init__(self, wildcard_ch: str):
+    def __init__(self, char: str):
         super().__init__()
-        self.type = 'wildcard'
-        self.wildcard_ch: str = wildcard_ch
-        self.char: str = wildcard_ch
+        self.char: str = char
 
 
 class SpaceToken(Token):
     """ Token of a space."""
 
-    def __init__(self, space_ch: str) -> None:
+    def __init__(self, char: str) -> None:
         super().__init__()
-        self.type = 'space'
-        self.space_char: str = space_ch
         self.char: str = string.whitespace
 
 
@@ -44,41 +38,37 @@ class Wildcard(WildcardToken):
     """ Token using '.' as wildcard."""
 
     def __init__(self):
-        super().__init__(wildcard_ch='.')
+        super().__init__(char='.')
 
 
 class StartToken(Token):
     """ Token of match start."""
 
-    def __init__(self, start_ch: str):
+    def __init__(self, char: str):
         super().__init__()
-        self.type = 'start'
-        self.start_ch: str = start_ch
-        self.char: str = start_ch
+        self.char: str = char
 
 
 class Start(StartToken):
     """ Token using '^' to match start."""
 
     def __init__(self):
-        super().__init__(start_ch='^')
+        super().__init__(char='^')
 
 
 class EndToken(Token):
     """ Token of match end."""
 
-    def __init__(self, end_ch: str):
+    def __init__(self, char: str):
         super().__init__()
-        self.type = 'end'
-        self.end_ch: str = end_ch
-        self.char: str = end_ch
+        self.char: str = char
 
 
 class End(EndToken):
     """ Token using '$' to match end."""
 
     def __init__(self):
-        super().__init__(end_ch='$')
+        super().__init__(char='$')
 
 
 class Escape(Token):
@@ -86,8 +76,6 @@ class Escape(Token):
 
     def __init__(self):
         super().__init__()
-        self.type = 'escape'
-        self.escape_char = '\\'
         self.char = '\\'
 
 
@@ -96,24 +84,21 @@ class Comma(Token):
 
     def __init__(self):
         super().__init__()
-        self.type = 'comma'
         self.char = ','
 
 
 class Parenthesis(Token):
     """ Token of a parenthesis."""
 
-    def __init__(self, side: str):
+    def __init__(self):
         super().__init__()
-        self.type = 'parenthesis'
-        self.side: Literal["L", "R"] = side
 
 
 class LeftParenthesis(Parenthesis):
     """ Left parenthesis token."""
 
     def __init__(self):
-        super().__init__(side='L')
+        super().__init__()
         self.char = '('
 
 
@@ -121,24 +106,22 @@ class RightParenthesis(Parenthesis):
     """ Right parenthesis token."""
 
     def __init__(self):
-        super().__init__(side='R')
+        super().__init__()
         self.char = ')'
 
 
 class CurlyBrace(Token):
     """ Curly brace token."""
 
-    def __init__(self, side: str):
+    def __init__(self):
         super().__init__()
-        self.type = 'curly'
-        self.side: Literal["L", "R"] = side
 
 
 class LeftCurlyBrace(CurlyBrace):
     """ Left curly brace token."""
 
     def __init__(self):
-        super().__init__(side='L')
+        super().__init__()
         self.char = '{'
 
 
@@ -146,24 +129,22 @@ class RightCurlyBrace(CurlyBrace):
     """ Right curly brace token."""
 
     def __init__(self):
-        super().__init__(side='R')
+        super().__init__()
         self.char = '}'
 
 
 class Bracket(Token):
     """ Brackets token."""
 
-    def __init__(self, side: str):
+    def __init__(self):
         super().__init__()
-        self.type = 'bracket'
-        self.side: Literal["L", "R"] = side
 
 
 class LeftBracket(Bracket):
     """ Left bracke token."""
 
     def __init__(self):
-        super().__init__(side='L')
+        super().__init__()
         self.char = '['
 
 
@@ -171,95 +152,88 @@ class RightBracket(Bracket):
     """ Right bracket token."""
 
     def __init__(self):
-        super().__init__(side='R')
+        super().__init__()
         self.char = ']'
 
 
 class Quantifier(Token):
     """ Quantifier token."""
 
-    def __init__(self, quantity: str, qtifier_char: str):
+    def __init__(self, char: str):
         super().__init__()
-        self.type = 'qtifier'
-        self.quantity: str = quantity
-        self.qtifier_char: str = qtifier_char
-        self.char: str = qtifier_char
+        self.char: str = char
 
 
 class ZeroOrMore(Quantifier):
     """ Quantifier 'zero or more' token."""
 
-    def __init__(self, qtifier_char: str):
-        super().__init__(quantity='zeroOrMore', qtifier_char=qtifier_char)
+    def __init__(self, char: str):
+        super().__init__(char=char)
 
 
 class OneOrMore(Quantifier):
     """ Quantifier 'one or more' token."""
 
-    def __init__(self, qtifier_char: str):
-        super().__init__(quantity='oneOrMore', qtifier_char=qtifier_char)
+    def __init__(self, char: str):
+        super().__init__(char=char)
 
 
 class ZeroOrOne(Quantifier):
     """ Quantifier 'zero or one' token."""
 
-    def __init__(self, qtifier_char: str):
-        super().__init__(quantity='zeroOrOne', qtifier_char=qtifier_char)
+    def __init__(self, char: str):
+        super().__init__(char=char)
 
 
 class Asterisk(ZeroOrMore):
     """ Quantifier 'zero or more' token using character '*'."""
 
     def __init__(self):
-        super().__init__(qtifier_char='*')
+        super().__init__(char='*')
 
 
 class Plus(OneOrMore):
     """ Quantifier 'one or more' token using character '+'."""
 
     def __init__(self):
-        super().__init__(qtifier_char='+')
+        super().__init__(char='+')
 
 
 class QuestionMark(ZeroOrOne):
     """ Quantifier 'zero or one' token using character '?'."""
 
     def __init__(self):
-        super().__init__(qtifier_char='?')
+        super().__init__(char='?')
 
 
 class OrToken(Token):
     """ Token of the or."""
 
-    def __init__(self, or_ch: str):
+    def __init__(self, char: str):
         super().__init__()
-        self.type = 'or'
-        self.or_ch: str = or_ch
-        self.char: str = or_ch
+        self.char: str = char
 
 
 class VerticalBar(OrToken):
     """ Token of the or using '|'."""
 
     def __init__(self):
-        super().__init__(or_ch='|')
+        super().__init__(char='|')
 
 
 class NotToken(Token):
     """ Token of the negation."""
 
-    def __init__(self, not_ch: str):
+    def __init__(self, char: str):
         super().__init__()
-        self.type = 'not'
-        self.not_ch: str = not_ch
-        self.char: str = not_ch
+        self.char: str = char
 
 
 class Circumflex(NotToken):
     """ Token of the negation using '^'."""
 
     def __init__(self):
-        super().__init__(not_ch='^')
+        super().__init__(char='^')
 
 
 class Dash(Token):
@@ -267,6 +241,4 @@ class Dash(Token):
 
     def __init__(self):
         super().__init__()
-        self.type = 'dash'
-        self.ch = '-'
         self.char = '-'

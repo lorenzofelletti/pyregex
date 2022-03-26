@@ -10,7 +10,8 @@ Example:
 """
 
 
-from typing import Callable, Union, Tuple, List
+from collections import deque
+from typing import Callable, Deque, Union, Tuple, List
 import unicodedata
 from .pyrser import Pyrser
 from .match import Match
@@ -74,8 +75,9 @@ class RegexEngine:
             re = unicodedata.normalize("NFKD", re).casefold()
             string = unicodedata.normalize("NFKD", string).casefold()
 
-        all_matches = []  # variables holding the matched groups list for each matched substring in the test string
-        highest_matched_idx = 0  # holds the highest matched string's index
+        # variables holding the matched groups list for each matched substring in the test string
+        all_matches: List[List[Match]] = []
+        highest_matched_idx: int = 0  # holds the highest matched string's index
 
         res, consumed, matches = self.__match__(re, string, 0)
         if res:
@@ -101,8 +103,8 @@ class RegexEngine:
     def __match__(self, re: str, string: str, start_str_i: int) -> Tuple[bool, int, List[Match]]:
         """ Same as match, but always returns after the first match."""
         ast = self.parser.parse(re=re)
-        matches: List[Match]
-        matches = []
+        matches: Deque[Match]
+        matches = deque()
 
         # str_i represents the matched characters so far. It is inizialized to
         # the value of the input parameter start_str_i because the match could
@@ -114,67 +116,7 @@ class RegexEngine:
         def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, List[Match]]:
             """ Returns the Tuple to be returned by __match__."""
             nonlocal matches
-            # reverses the list so the last match (the "whole" match) is first
-            matches.reverse()
-            return res, str_i, matches
-
-        def backtrack(backtrack_stack: List[Tuple[int, int, int, List[int]]], str_i: int, curr_i: int) -> Tuple[bool, int, int]:
-            """ Returns whether it is possible to backtrack and the state to backtrack to.
-
-            Takes as input the current state of the engine and returns whether
-            or not it is possible to backtrack.
-
-            Args:
-                backtrack_stack (List[Tuple[int, int, int, List[int]]]): the
-                current backtrack_stack situation. The Tuple values represents,
-                in order from left to right, the node index of the entry in its
-                parent children list, the minimum times that node must be
-                matched, the time it is matched in the current state, the list
-                of consumed character each times it was matched
-                str_i (int): the current considered index of the test string
-                curr_i (int): the index of the GroupNode children considered
-
-            Returns:
-                A Tuple containing a bool, True if it is possible to backtrack,
-                the new string index, and the new node children index to which
-                backtrack to. Note that the last two parameters only have a
-                meaning in the case it is possible to backtrack (the bool is
-                True).
-            """
-            if len(backtrack_stack) == 0:
-                return False, str_i, curr_i
-
-            # the fist step is to pop the last tuple from the backtrack_stack
-            node_i, min_, matched_times, consumed_list = backtrack_stack.pop()
-
-            if matched_times == min_:
-                # if a node is already matched the minimum number of times, the
-                # chance you have to potentially be able to backtrack is to is
-                # to delete the entry from the stack and then search for a new
-                # possibility (recursively calling this function).
-                # But, before the recursion, you have to calculate  what the
-                # string index (str_i) value was before the node was matched
-                # even once. Thus, you have to decrease the string index
-                # of each consumption in the consumed_list.
-
-                # calculate_the new str_i
-                for consumption in consumed_list:
-                    str_i -= consumption
-                # recursive call
-                return backtrack(backtrack_stack, str_i, node_i)
-            else:
-                # the node was matched more times than its min, so you just
-                # need to remove the last consumption from the list,
-                # decrease the str_i by that amount, decrease the times the node
-                # was matched - matched_times - by 1, and then append the stack
-                # the tuple with the new matched_times and consumed_list.
-                last_consumed = consumed_list.pop()
-                new_str_i = str_i - last_consumed
-                backtrack_stack.append(
-                    (node_i, min_, matched_times - 1, consumed_list))
-                # lastly, you return that the backtracking is possible, and
-                # the state to which backtrack to.
-                return True, new_str_i, curr_i
+            return res, str_i, list(matches)
 
         def save_matches(match_group: Callable, ast: Union[RE, GroupNode], string: str, start_idx: int) -> Tuple[bool, int]:
             """ Save the matches of capturing groups.
@@ -198,7 +140,7 @@ class RegexEngine:
                     if matches[i].group_id == ast.group_id:
                         matches.remove(matches[i])
                         break
-                matches.append(
+                matches.appendleft(
                     Match(ast.group_id, start_idx, end_idx, string, ast.group_name))
 
             return res, end_idx
@@ -211,7 +153,68 @@ class RegexEngine:
             number of matched characters in the string so far.
             '''
             nonlocal str_i
-            backtrack_stack = []
+            backtrack_stack: List[Tuple[int, int, int, List[int]]] = []
+
+            def backtrack(str_i: int, curr_i: int) -> Tuple[bool, int, int]:
+                """ Returns whether it is possible to backtrack and the state to backtrack to.
+
+                Takes as input the current state of the engine and returns whether
+                or not it is possible to backtrack.
+
+                Args:
+                    backtrack_stack (List[Tuple[int, int, int, List[int]]]): the
+                    current backtrack_stack situation. The Tuple values represents,
+                    in order from left to right, the node index of the entry in its
+                    parent children list, the minimum times that node must be
+                    matched, the time it is matched in the current state, the list
+                    of consumed character each times it was matched
+                    str_i (int): the current considered index of the test string
+                    curr_i (int): the index of the GroupNode children considered
+
+                Returns:
+                    A Tuple containing a bool, True if it is possible to backtrack,
+                    the new string index, and the new node children index to which
+                    backtrack to. Note that the last two parameters only have a
+                    meaning in the case it is possible to backtrack (the bool is
+                    True).
+                """
+                nonlocal backtrack_stack
+
+                if len(backtrack_stack) == 0:
+                    return False, str_i, curr_i
+
+                # the fist step is to pop the last tuple from the backtrack_stack
+                node_i, min_, matched_times, consumed_list = backtrack_stack.pop()
+
+                if matched_times == min_:
+                    # if a node is already matched the minimum number of times, the
+                    # chance you have to potentially be able to backtrack is to is
+                    # to delete the entry from the stack and then search for a new
+                    # possibility (recursively calling this function).
+                    # But, before the recursion, you have to calculate  what the
+                    # string index (str_i) value was before the node was matched
+                    # even once. Thus, you have to decrease the string index
+                    # of each consumption in the consumed_list.
+
+                    # calculate_the new str_i
+                    for consumption in consumed_list:
+                        str_i -= consumption
+                    # recursive call
+                    return backtrack(str_i, node_i)
+                else:
+                    # the node was matched more times than its min, so you just
+                    # need to remove the last consumption from the list,
+                    # decrease the str_i by that amount, decrease the times the node
+                    # was matched - matched_times - by 1, and then append the stack
+                    # the tuple with the new matched_times and consumed_list.
+                    last_consumed = consumed_list.pop()
+                    new_str_i = str_i - last_consumed
+                    backtrack_stack.append(
+                        (node_i, min_, matched_times - 1, consumed_list))
+                    # lastly, you return that the backtracking is possible, and
+                    # the state to which backtrack to.
+                    return True, new_str_i, curr_i
+
             curr_node = ast.children[0] if len(ast.children) > 0 else None
             i = 0  # the children i'm iterating, not to confuse with str_i
 
@@ -243,8 +246,7 @@ class RegexEngine:
                         elif min_ <= j:
                             break
                         else:
-                            can_bt, bt_str_i, bt_i = backtrack(
-                                backtrack_stack, str_i, i)
+                            can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
                                 str_i = bt_str_i
@@ -280,8 +282,7 @@ class RegexEngine:
                             # i did the bare minimum or more
                             break
                         else:
-                            can_bt, bt_str_i, bt_i = backtrack(
-                                backtrack_stack, str_i, i)
+                            can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
                                 str_i = bt_str_i
@@ -321,7 +322,7 @@ class RegexEngine:
                                 if min_ <= j:  # I already met the minimum requirement for match
                                     break
                                 can_bt, bt_str_i, bt_i = backtrack(
-                                    backtrack_stack, before_str_i, i)
+                                    before_str_i, i)
                                 if can_bt:
                                     i = bt_i
                                     str_i = bt_str_i
@@ -338,7 +339,7 @@ class RegexEngine:
                             else:
                                 # i have more states, but the input is finished
                                 can_bt, bt_str_i, bt_i = backtrack(
-                                    backtrack_stack, before_str_i, i)
+                                    before_str_i, i)
                                 if can_bt:
                                     i = bt_i
                                     str_i = bt_str_i
@@ -371,6 +372,6 @@ class RegexEngine:
             if res:
                 return return_fnc(True, str_i)
             else:
-                matches = []
+                matches = deque()
                 str_i = i
         return return_fnc(False, str_i)

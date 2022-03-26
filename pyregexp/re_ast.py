@@ -1,5 +1,4 @@
 from collections import deque
-import itertools
 from typing import Deque, List, Union
 
 
@@ -8,11 +7,9 @@ class ASTNode:
 
     Abstract Syntax Tree classes hierarchy base class.
     """
-    id_iter = itertools.count()
 
-    def __init__(self):
-        self.id: int = next(ASTNode.id_iter)
-        self.type: str = 'astNode'
+    def __init__(self) -> None:
+        pass
 
 
 class RE(ASTNode):
@@ -21,9 +18,8 @@ class RE(ASTNode):
     This class acts as the entry point for a regular expression's AST.
     """
 
-    def __init__(self, child: ASTNode, capturing: bool = False, group_name: str = "RegEx"):
+    def __init__(self, child: ASTNode, capturing: bool = False, group_name: str = "RegEx") -> None:
         super().__init__()
-        self.type = 're'
         self.__capturing__: bool = capturing
         self.group_name: str = group_name
         self.group_id: int = -1
@@ -71,7 +67,6 @@ class Element(LeafNode):
 
     def __init__(self, match_ch: str = None) -> None:
         super().__init__()
-        self.type = 'element'
         self.match: str = match_ch
         self.min: Union[int, float] = 1
         self.max: Union[int, float] = 1
@@ -88,7 +83,6 @@ class WildcardElement(Element):
 
     def __init__(self) -> None:
         super().__init__(match_ch='anything')
-        self.type = 'wildcardElement'
         self.match = None
 
     def is_match(self, ch: str = None, str_i: int = 0, str_len: int = 0) -> bool:
@@ -103,7 +97,6 @@ class SpaceElement(Element):
 
     def __init__(self) -> None:
         super().__init__()
-        self.type = 'spaceElement'
         self.match = None
 
     def is_match(self, ch: str = None, str_i: int = 0, str_len: int = 0) -> bool:
@@ -119,7 +112,6 @@ class RangeElement(LeafNode):
 
     def __init__(self, match_str: str, is_positive_logic: bool = True) -> None:
         super().__init__()
-        self.type = 'rangeElement'
         self.match: str = match_str
         self.min: Union[int, float] = 1
         self.max: Union[int, float] = 1
@@ -138,7 +130,6 @@ class StartElement(LeafNode):
 
     def __init__(self) -> None:
         super().__init__()
-        self.type = 'startElement'
         self.match = None
         self.min: Union[int, float] = 1
         self.max: Union[int, float] = 1
@@ -155,7 +146,6 @@ class EndElement(LeafNode):
 
     def __init__(self) -> None:
         super().__init__()
-        self.type = 'endElement'
         self.match = ''
         self.min: Union[int, float] = 1
         self.max: Union[int, float] = 1
@@ -173,7 +163,6 @@ class OrNode(ASTNode):
 
     def __init__(self, left: ASTNode, right: ASTNode) -> None:
         super().__init__()
-        self.type = 'orNode'
         self.left: ASTNode = left
         self.right: ASTNode = right
         self.children: List[ASTNode] = [left, right]
@@ -190,7 +179,6 @@ class NotNode(ASTNode):
 
     def __init__(self, child: ASTNode) -> None:
         super().__init__()
-        self.type = 'notNode'
         self.child: ASTNode = child
         self.children: List[ASTNode] = deque([child])
 
@@ -201,11 +189,10 @@ class GroupNode(ASTNode):
     Inherits from ASTNode and models the group in a regex.
     """
 
-    def __init__(self, children: Deque[ASTNode], capturing: bool = False, group_name: str = None, group_id: int = None) -> None:
+    def __init__(self, children: Deque[ASTNode], capturing: bool = False, group_name: str = None, group_id: int = -1) -> None:
         super().__init__()
-        self.type = 'groupNode'
         self.__capturing__: bool = capturing
-        self.group_id: int = group_id if group_id is not None else self.id
+        self.group_id: int = group_id
         self.group_name: str = group_name if group_name is not None else "Group " + \
             str(self.group_id)
         self.children: List[ASTNode] = children

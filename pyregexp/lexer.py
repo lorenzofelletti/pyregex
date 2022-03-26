@@ -43,7 +43,7 @@ class Lexer:
                     append(ElementToken(char='\t'))
                 if ch == 's':
                     # \s matches a space character
-                    append(SpaceToken(space_ch=ch))
+                    append(SpaceToken(char=ch))
                 else:
                     append(ElementToken(char=ch))
             elif ch == '\\':
@@ -75,7 +75,7 @@ class Lexer:
                         append(RightCurlyBrace())
                         break
                     else:
-                        raise Exception('Bad token at index ${}.'.format(i))
+                        raise Exception("Bad token at index ${}.".format(i))
                     i += 1
             elif ch == '^':
                 if i == 0:

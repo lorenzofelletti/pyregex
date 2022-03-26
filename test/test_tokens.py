@@ -7,22 +7,23 @@ def test_Asterisk():
     a = Asterisk()
     assert a is not None
 
-    assert a.type == 'qtifier'
+    assert type(a) == Asterisk
 
 
 def test_NotToken():
     assert issubclass(NotToken, Token) == True
 
-    nt = NotToken(not_ch='^')
+    nt = NotToken(char='^')
     assert nt is not None
-
-    assert nt.type == 'not'
-    assert nt.not_ch == '^'
-    assert nt.char == nt.not_ch
+    assert nt.char == '^'
 
 
 def test_Bracket():
-    br = Bracket("L")
+    br = Bracket()
+    assert br is not None
+    br = LeftBracket()
+    assert br is not None
+    br = RightBracket()
     assert br is not None
 
 
