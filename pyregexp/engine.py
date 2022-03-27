@@ -26,8 +26,10 @@ class RegexEngine:
 
     def __init__(self):
         self.parser: Pyrser = Pyrser()
+        self.prev_re: str = None
+        self.prev_ast: RE = None
 
-    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: int = 0) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
+    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: int = 0) -> Union[Tuple[bool, int, List[Deque[Match]]], Tuple[bool, int]]:
         """ Searches a regex in a test string.
 
         Searches the passed regular expression in the passed test string and
@@ -55,14 +57,14 @@ class RegexEngine:
 
         Returns:
             A tuple containing whether a match was found or not, the last
-            matched character index, and (if return_matches is True) a
-            list of lists of Match, where each list of matches represents
+            matched character index, and, if return_matches is True, a
+            list of deques of Match, where each list of matches represents
             in the first position the whole match, and in the subsequent
             positions all the group and subgroups matched. 
         """
 
-        def return_fnc(res: bool, consumed: int, all_matches: list, return_matches: bool) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
-            """ If return_matches is True returns the matches."""
+        def return_fnc(res: bool, consumed: int, all_matches: List[Deque[Match]], return_matches: bool) -> Union[Tuple[bool, int, List[Deque[Match]]], Tuple[bool, int]]:
+            """ Create the Tuple to return."""
             if return_matches:
                 return res, consumed, all_matches
             else:
@@ -75,11 +77,15 @@ class RegexEngine:
             re = unicodedata.normalize("NFKD", re).casefold()
             string = unicodedata.normalize("NFKD", string).casefold()
 
+        ast = self.parser.parse(re=re) if self.prev_re != re else self.prev_ast
+        self.prev_re = re
+        self.prev_ast = ast
+
         # variables holding the matched groups list for each matched substring in the test string
-        all_matches: List[List[Match]] = []
+        all_matches: List[Deque[Match]] = []
         highest_matched_idx: int = 0  # holds the highest matched string's index
 
-        res, consumed, matches = self.__match__(re, string, 0)
+        res, consumed, matches = self.__match__(ast, string, 0)
         if res:
             highest_matched_idx = consumed
             all_matches.append(matches)
@@ -90,7 +96,7 @@ class RegexEngine:
             return return_fnc(res, highest_matched_idx, all_matches, return_matches)
 
         while True:
-            res, consumed, matches = self.__match__(re, string, consumed)
+            res, consumed, matches = self.__match__(ast, string, consumed)
 
             # if consumed is not grater than highest_matched_idx this means the new match
             # consumed 0 characters, so there is really nothing more to match
@@ -100,11 +106,9 @@ class RegexEngine:
             else:
                 return return_fnc(True, highest_matched_idx, all_matches, return_matches)
 
-    def __match__(self, re: str, string: str, start_str_i: int) -> Tuple[bool, int, List[Match]]:
+    def __match__(self, ast: RE, string: str, start_str_i: int) -> Tuple[bool, int, Deque[Match]]:
         """ Same as match, but always returns after the first match."""
-        ast = self.parser.parse(re=re)
-        matches: Deque[Match]
-        matches = deque()
+        matches: Deque[Match] = deque()
 
         # str_i represents the matched characters so far. It is inizialized to
         # the value of the input parameter start_str_i because the match could
@@ -113,10 +117,10 @@ class RegexEngine:
         # string.
         str_i = start_str_i
 
-        def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, List[Match]]:
+        def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, Deque[Match]]:
             """ Returns the Tuple to be returned by __match__."""
             nonlocal matches
-            return res, str_i, list(matches)
+            return res, str_i, matches
 
         def save_matches(match_group: Callable, ast: Union[RE, GroupNode], string: str, start_idx: int) -> Tuple[bool, int]:
             """ Save the matches of capturing groups.
@@ -146,30 +150,24 @@ class RegexEngine:
             return res, end_idx
 
         def match_group(ast: Union[RE, GroupNode, OrNode], string: str) -> Tuple[bool, int]:
-            '''
+            """
             Match a group, which is always the case.s
 
             Returns the match state (True or False) and the new string i, that is the
             number of matched characters in the string so far.
-            '''
+            """
             nonlocal str_i
             backtrack_stack: List[Tuple[int, int, int, List[int]]] = []
 
-            def backtrack(str_i: int, curr_i: int) -> Tuple[bool, int, int]:
+            def backtrack(str_i: int, curr_child_i: int) -> Tuple[bool, int, int]:
                 """ Returns whether it is possible to backtrack and the state to backtrack to.
 
                 Takes as input the current state of the engine and returns whether
                 or not it is possible to backtrack.
 
                 Args:
-                    backtrack_stack (List[Tuple[int, int, int, List[int]]]): the
-                    current backtrack_stack situation. The Tuple values represents,
-                    in order from left to right, the node index of the entry in its
-                    parent children list, the minimum times that node must be
-                    matched, the time it is matched in the current state, the list
-                    of consumed character each times it was matched
                     str_i (int): the current considered index of the test string
-                    curr_i (int): the index of the GroupNode children considered
+                    curr_child_i (int): the index of the GroupNode children considered
 
                 Returns:
                     A Tuple containing a bool, True if it is possible to backtrack,
@@ -181,10 +179,10 @@ class RegexEngine:
                 nonlocal backtrack_stack
 
                 if len(backtrack_stack) == 0:
-                    return False, str_i, curr_i
+                    return False, str_i, curr_child_i
 
                 # the fist step is to pop the last tuple from the backtrack_stack
-                node_i, min_, matched_times, consumed_list = backtrack_stack.pop()
+                popped_child_i, min_, matched_times, consumed_list = backtrack_stack.pop()
 
                 if matched_times == min_:
                     # if a node is already matched the minimum number of times, the
@@ -200,7 +198,7 @@ class RegexEngine:
                     for consumption in consumed_list:
                         str_i -= consumption
                     # recursive call
-                    return backtrack(str_i, node_i)
+                    return backtrack(str_i, popped_child_i)
                 else:
                     # the node was matched more times than its min, so you just
                     # need to remove the last consumption from the list,
@@ -210,10 +208,10 @@ class RegexEngine:
                     last_consumed = consumed_list.pop()
                     new_str_i = str_i - last_consumed
                     backtrack_stack.append(
-                        (node_i, min_, matched_times - 1, consumed_list))
+                        (popped_child_i, min_, matched_times - 1, consumed_list))
                     # lastly, you return that the backtracking is possible, and
                     # the state to which backtrack to.
-                    return True, new_str_i, curr_i
+                    return True, new_str_i, curr_child_i
 
             curr_node = ast.children[0] if len(ast.children) > 0 else None
             i = 0  # the children i'm iterating, not to confuse with str_i

@@ -1,5 +1,4 @@
 from typing import Union, Callable
-from functools import lru_cache
 import itertools
 import math
 from .lexer import Lexer
@@ -16,7 +15,6 @@ class Pyrser:
     def __init__(self) -> None:
         self.lxr: Lexer = Lexer()
 
-    @lru_cache(maxsize=4)
     def parse(self, re: str) -> RE:
         """ Parses a regular expression.
 

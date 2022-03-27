@@ -232,21 +232,28 @@ def test_engine_1(reng: RegexEngine):
 
 
 def test_engine_2(reng: RegexEngine):
+    regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+
     mail = "lorenzo.felletti@mail.com"
-    res, consumed = reng.match(
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    res, consumed = reng.match(regex, mail)
     assert res == True
     assert consumed == len(mail)
 
     mail = "lorenzo.felletti@mail.c"
-    res, _ = reng.match(
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    res, _ = reng.match(regex, mail)
     assert res == False
 
     mail = "lorenzo.fellettimail.com"
-    res, _ = reng.match(
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    res, _ = reng.match(regex, mail)
     assert res == False
+
+    mail = "lorenz^^o.felletti@mymail.com"
+    res, _ = reng.match(regex, mail)
+    assert res == False
+
+    mail = "lorenz0.%+-@mymail.com"
+    res, _ = reng.match(regex, mail)
+    assert res == True
 
 
 def test_engine_3(reng: RegexEngine):
