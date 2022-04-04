@@ -536,3 +536,101 @@ def test_regex_with_rigth_empty_group(reng: RegexEngine):
     assert res == True
     assert len(matches) == 1 and len(matches[0]) == 1
     assert matches[0][0].match == "a" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
+
+
+def test_empty_group_quantified(reng: RegexEngine):
+    regex = r'()+'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+
+def test_nested_quantifiers(reng: RegexEngine):
+    regex = r'(a*)+ab'
+    test_str = 'aab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+    regex = r'(a+)+ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == False
+
+
+def test_nested_quantifiers_with_or_node(reng: RegexEngine):
+    regex = r'(a*|b*)*ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+    regex = r'(a*|b*)+ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+    regex = r'(a+|b+)+ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == False
+
+
+def test_multiple_named_groups(reng: RegexEngine):
+    regex = r"(<first>[a-z]+)(?<second>i)(?<third>l)"
+    test_str = "nostril"
+    res, _, _ = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+
+
+def test_one_named_group(reng: RegexEngine):
+    regex = r"[a-z]+(?<last>l)"
+    test_str = "nostril"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+
+
+def test_two_separated_named_group(reng: RegexEngine):
+    regex = r"(?<first>n)[a-z]+(?<last>l)"
+    test_str = "nostril"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nostril"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"
+
+
+def test_match_contiguous_named_groups(reng: RegexEngine):
+    regex = r"(?<first>n)(?<last>l)"
+    test_str = "nl"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nl"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"
+
+
+def test_named_group_with_range_element(reng: RegexEngine):
+    regex = r"(?<first>[a-z])(?<last>l)"
+    test_str = "nl"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nl"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"
+
+
+def test_named_group_with_range_element_and_quantifier(reng: RegexEngine):
+    regex = r"(?<first>[a-z]+)(?<last>l)"
+    test_str = "nl"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nl"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"

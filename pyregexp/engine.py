@@ -117,12 +117,19 @@ class RegexEngine:
         # string.
         str_i = start_str_i
 
+        # max_matched_idx represents the "upper limit" of the match.
+        # It is necessary when backtracking in the presence of nested
+        # quantifiers, because we need a way to "tell" the group that
+        # is causing the fail by being too greedy to stop earlier if
+        # possible.
+        max_matched_idx = -1
+
         def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, Deque[Match]]:
             """ Returns the Tuple to be returned by __match__."""
             nonlocal matches
             return res, str_i, matches
 
-        def save_matches(match_group: Callable, ast: Union[RE, GroupNode], string: str, start_idx: int) -> Tuple[bool, int]:
+        def save_matches(match_group: Callable, ast: Union[RE, GroupNode], string: str, start_idx: int, max_matched_idx=-1) -> Tuple[bool, int]:
             """ Save the matches of capturing groups.
 
             Args:
@@ -137,7 +144,7 @@ class RegexEngine:
             """
             nonlocal matches
 
-            res, end_idx = match_group(ast, string)
+            res, end_idx = match_group(ast, string, max_matched_idx)
 
             if ast.is_capturing() and res == True:
                 for i in range(0, len(matches)):
@@ -149,7 +156,7 @@ class RegexEngine:
 
             return res, end_idx
 
-        def match_group(ast: Union[RE, GroupNode, OrNode], string: str) -> Tuple[bool, int]:
+        def match_group(ast: Union[RE, GroupNode, OrNode], string: str, max_matched_idx: int = -1) -> Tuple[bool, int]:
             """
             Match a group, which is always the case.s
 
@@ -177,6 +184,8 @@ class RegexEngine:
                     True).
                 """
                 nonlocal backtrack_stack
+                nonlocal max_matched_idx
+                nonlocal ast
 
                 if len(backtrack_stack) == 0:
                     return False, str_i, curr_child_i
@@ -197,8 +206,12 @@ class RegexEngine:
                     # calculate_the new str_i
                     for consumption in consumed_list:
                         str_i -= consumption
-                    # recursive call
-                    return backtrack(str_i, popped_child_i)
+                    if max_matched_idx == -1 or isinstance(ast.children[popped_child_i], LeafNode):
+                        # recursive call
+                        return backtrack(str_i, popped_child_i)
+                    else:
+                        # case of backtracking from nested quantifier
+                        return True, str_i, popped_child_i
                 else:
                     # the node was matched more times than its min, so you just
                     # need to remove the last consumption from the list,
@@ -207,11 +220,27 @@ class RegexEngine:
                     # the tuple with the new matched_times and consumed_list.
                     last_consumed = consumed_list.pop()
                     new_str_i = str_i - last_consumed
-                    backtrack_stack.append(
-                        (popped_child_i, min_, matched_times - 1, consumed_list))
-                    # lastly, you return that the backtracking is possible, and
-                    # the state to which backtrack to.
-                    return True, new_str_i, curr_child_i
+                    if max_matched_idx == -1 or isinstance(ast.children[popped_child_i], LeafNode):
+                        backtrack_stack.append(
+                            (popped_child_i, min_, matched_times - 1, consumed_list))
+                        # lastly, you return that the backtracking is possible, and
+                        # the state to which backtrack to.
+                        return True, new_str_i, curr_child_i
+                    else:
+                        # case of backtracking from nested quantifier
+                        return True, new_str_i, popped_child_i
+
+            def remove_this_node_from_stack(curr_child_i: int, str_i: int) -> int:
+                """ Removes node from stack and returns the new str_i.
+                """
+                nonlocal backtrack_stack
+                popped_child_i, min_, matched_times, consumed_list = backtrack_stack.pop()
+                if popped_child_i == curr_child_i:
+                    for consumption in consumed_list:
+                        str_i -= consumption
+                else:
+                    backtrack_stack.append((popped_child_i, min_, matched_times, consumed_list))
+                return str_i
 
             curr_node = ast.children[0] if len(ast.children) > 0 else None
             i = 0  # the children i'm iterating, not to confuse with str_i
@@ -230,18 +259,22 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         tmp_str_i = str_i
-                        res, new_str_i = match_group(ast=curr_node.left, string=string) if not isinstance(
-                            curr_node.left, GroupNode) else save_matches(match_group=match_group, ast=curr_node.left, string=string, start_idx=str_i)
-                        if res == True:
+                        res, new_str_i = match_group(curr_node.left, string, max_matched_idx) if not isinstance(
+                            curr_node.left, GroupNode) else save_matches(match_group, curr_node.left, string, str_i, max_matched_idx)
+                        if res == True and (max_matched_idx == -1 or new_str_i <= max_matched_idx):
                             pass
                         else:
                             str_i = tmp_str_i
-                            res, new_str_i = match_group(ast=curr_node.right, string=string) if not isinstance(
-                                curr_node.right, GroupNode) else save_matches(match_group=match_group, ast=curr_node.right, string=string, start_idx=str_i)
+                            res, new_str_i = match_group(curr_node.right, string, max_matched_idx) if not isinstance(
+                                curr_node.right, GroupNode) else save_matches(match_group, curr_node.right, string, str_i, max_matched_idx)
 
-                        if res == True:
+                        if res == True and (max_matched_idx == -1 or new_str_i <= max_matched_idx):
+                            if (new_str_i - tmp_str_i == 0) and j >= min_:
+                                max_matched_idx = -1
+                                break
                             consumed_list.append(new_str_i - tmp_str_i)
                         elif min_ <= j:
+                            max_matched_idx = -1
                             break
                         else:
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
@@ -270,14 +303,18 @@ class RegexEngine:
                         tmp_str_i = str_i
 
                         res, new_str_i = save_matches(
-                            match_group, curr_node, string, str_i)
-                        if res == True:
+                            match_group, curr_node, string, str_i, max_matched_idx)
+                        if res == True and (max_matched_idx == -1 or new_str_i <= max_matched_idx):
                             # i must use tmp_str_i because str_i is changed by the match_group
                             # call, so (new_str_i - str_i) would be always 0
+                            if (new_str_i - tmp_str_i == 0) and j >= min_:
+                                max_matched_idx = -1
+                                break
                             consumed_list.append(new_str_i - tmp_str_i)
                             #str_i = new_str_i
                         elif min_ <= j:
                             # i did the bare minimum or more
+                            max_matched_idx = -1
                             break
                         else:
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
@@ -312,13 +349,18 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         if str_i < len(string):  # i still have input to match
-                            if curr_node.is_match(ch=string[str_i], str_i=str_i, str_len=len(string)):
+                            if curr_node.is_match(ch=string[str_i], str_i=str_i, str_len=len(string)) and (max_matched_idx == -1 or str_i < max_matched_idx):
                                 if not (isinstance(curr_node, StartElement) or isinstance(curr_node, EndElement)):
                                     consumed_list.append(1)
                                     str_i += 1
                             else:
                                 if min_ <= j:  # I already met the minimum requirement for match
                                     break
+                                if i > 0 and not isinstance(ast.children[i-1], LeafNode):
+                                    str_i = remove_this_node_from_stack(i, str_i)
+                                    if str_i == 0:
+                                        return False, str_i
+                                    max_matched_idx = str_i - 1
                                 can_bt, bt_str_i, bt_i = backtrack(
                                     before_str_i, i)
                                 if can_bt:
