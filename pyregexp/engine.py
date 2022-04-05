@@ -163,10 +163,11 @@ class RegexEngine:
             Returns the match state (True or False) and the new string i, that is the
             number of matched characters in the string so far.
             """
+            nonlocal start_str_i
             nonlocal str_i
             backtrack_stack: List[Tuple[int, int, int, List[int]]] = []
 
-            def backtrack(str_i: int, curr_child_i: int) -> Tuple[bool, int, int]:
+            def backtrack(str_i: int, curr_child_i: int, recursive: bool = False) -> Tuple[bool, int, int]:
                 """ Returns whether it is possible to backtrack and the state to backtrack to.
 
                 Takes as input the current state of the engine and returns whether
@@ -204,14 +205,19 @@ class RegexEngine:
                     # of each consumption in the consumed_list.
 
                     # calculate_the new str_i
+                    before_str_i = str_i
                     for consumption in consumed_list:
                         str_i -= consumption
-                    if max_matched_idx == -1 or isinstance(ast.children[popped_child_i], LeafNode):
+                    if max_matched_idx == -1 or isinstance(ast.children[popped_child_i], LeafNode) or before_str_i == str_i:
                         # recursive call
-                        return backtrack(str_i, popped_child_i)
+                        return backtrack(str_i, popped_child_i, True)
                     else:
                         # case of backtracking from nested quantifier
-                        return True, str_i, popped_child_i
+                        # returns "not recursive" because if it is the case
+                        # of a recursive call, this is outside of the case of
+                        # simply nested quantifiers, and in I cannot backtrack
+                        # anymore
+                        return not recursive, str_i, popped_child_i
                 else:
                     # the node was matched more times than its min, so you just
                     # need to remove the last consumption from the list,
@@ -228,7 +234,7 @@ class RegexEngine:
                         return True, new_str_i, curr_child_i
                     else:
                         # case of backtracking from nested quantifier
-                        return True, new_str_i, popped_child_i
+                        return not recursive, new_str_i, popped_child_i
 
             def remove_this_node_from_stack(curr_child_i: int, str_i: int) -> int:
                 """ Removes node from stack and returns the new str_i.
@@ -259,6 +265,7 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         tmp_str_i = str_i
+
                         res, new_str_i = match_group(curr_node.left, string, max_matched_idx) if not isinstance(
                             curr_node.left, GroupNode) else save_matches(match_group, curr_node.left, string, str_i, max_matched_idx)
                         if res == True and (max_matched_idx == -1 or new_str_i <= max_matched_idx):
@@ -273,10 +280,15 @@ class RegexEngine:
                                 max_matched_idx = -1
                                 break
                             consumed_list.append(new_str_i - tmp_str_i)
-                        elif min_ <= j:
-                            max_matched_idx = -1
-                            break
                         else:
+                            if min_ <= j:
+                                max_matched_idx = -1
+                                break
+                            if i > 0 and not isinstance(ast.children[i-1], LeafNode):
+                                str_i = remove_this_node_from_stack(i, str_i)
+                            if str_i == 0:
+                                return False, str_i
+                            max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx -1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
@@ -289,6 +301,7 @@ class RegexEngine:
                     if not backtracking:
                         backtrack_stack.append(
                             (i, min_, j, consumed_list))
+                        max_matched_idx = -1
                         i += 1
                     continue
 
@@ -312,11 +325,16 @@ class RegexEngine:
                                 break
                             consumed_list.append(new_str_i - tmp_str_i)
                             #str_i = new_str_i
-                        elif min_ <= j:
-                            # i did the bare minimum or more
-                            max_matched_idx = -1
-                            break
                         else:
+                            if min_ <= j:
+                                # i did the bare minimum or more
+                                max_matched_idx = -1
+                                break
+                            if i > 0 and not isinstance(ast.children[i-1], LeafNode):
+                                str_i = remove_this_node_from_stack(i, str_i)
+                                if str_i == 0:
+                                    return False, str_i
+                                max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx -1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
@@ -333,6 +351,7 @@ class RegexEngine:
                     if not backtracking:
                         backtrack_stack.append(
                             (i, min_, j, consumed_list))
+                        max_matched_idx = -1
                         i += 1
 
                     continue
