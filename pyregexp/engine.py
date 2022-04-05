@@ -286,7 +286,7 @@ class RegexEngine:
                                 break
                             if i > 0 and not isinstance(ast.children[i-1], LeafNode):
                                 str_i = remove_this_node_from_stack(i, str_i)
-                            if str_i == 0:
+                            if str_i == start_str_i:
                                 return False, str_i
                             max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx -1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
@@ -332,7 +332,7 @@ class RegexEngine:
                                 break
                             if i > 0 and not isinstance(ast.children[i-1], LeafNode):
                                 str_i = remove_this_node_from_stack(i, str_i)
-                                if str_i == 0:
+                                if str_i == start_str_i:
                                     return False, str_i
                                 max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx -1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
@@ -377,7 +377,7 @@ class RegexEngine:
                                     break
                                 if i > 0 and not isinstance(ast.children[i-1], LeafNode):
                                     str_i = remove_this_node_from_stack(i, str_i)
-                                    if str_i == 0:
+                                    if str_i == start_str_i:
                                         return False, str_i
                                     max_matched_idx = str_i - 1
                                 can_bt, bt_str_i, bt_i = backtrack(
