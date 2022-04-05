@@ -1,5 +1,4 @@
 from typing import List
-from functools import lru_cache
 from .tokens import *
 
 
@@ -15,7 +14,6 @@ class Lexer:
     def __is_digit__(self, ch: str) -> bool:
         return self.__digits__.find(ch) > -1
 
-    @lru_cache(maxsize=4)
     def scan(self, re: str) -> List[Token]:
         """ Regular expressions scanner.
 

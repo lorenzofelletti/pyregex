@@ -180,7 +180,7 @@ class NotNode(ASTNode):
     def __init__(self, child: ASTNode) -> None:
         super().__init__()
         self.child: ASTNode = child
-        self.children: List[ASTNode] = deque([child])
+        self.children: Deque[ASTNode] = deque([child])
 
 
 class GroupNode(ASTNode):
@@ -195,7 +195,7 @@ class GroupNode(ASTNode):
         self.group_id: int = group_id
         self.group_name: str = group_name if group_name is not None else "Group " + \
             str(self.group_id)
-        self.children: List[ASTNode] = children
+        self.children: Deque[ASTNode] = children
         self.min: Union[int, float] = 1
         self.max: Union[int, float] = 1
 

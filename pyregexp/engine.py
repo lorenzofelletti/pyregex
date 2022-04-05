@@ -26,8 +26,10 @@ class RegexEngine:
 
     def __init__(self):
         self.parser: Pyrser = Pyrser()
+        self.prev_re: str = None
+        self.prev_ast: RE = None
 
-    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: int = 0) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
+    def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: int = 0) -> Union[Tuple[bool, int, List[Deque[Match]]], Tuple[bool, int]]:
         """ Searches a regex in a test string.
 
         Searches the passed regular expression in the passed test string and
@@ -55,14 +57,14 @@ class RegexEngine:
 
         Returns:
             A tuple containing whether a match was found or not, the last
-            matched character index, and (if return_matches is True) a
-            list of lists of Match, where each list of matches represents
+            matched character index, and, if return_matches is True, a
+            list of deques of Match, where each list of matches represents
             in the first position the whole match, and in the subsequent
             positions all the group and subgroups matched. 
         """
 
-        def return_fnc(res: bool, consumed: int, all_matches: list, return_matches: bool) -> Union[Tuple[bool, int, List[List[Match]]], Tuple[bool, int]]:
-            """ If return_matches is True returns the matches."""
+        def return_fnc(res: bool, consumed: int, all_matches: List[Deque[Match]], return_matches: bool) -> Union[Tuple[bool, int, List[Deque[Match]]], Tuple[bool, int]]:
+            """ Create the Tuple to return."""
             if return_matches:
                 return res, consumed, all_matches
             else:
@@ -75,11 +77,15 @@ class RegexEngine:
             re = unicodedata.normalize("NFKD", re).casefold()
             string = unicodedata.normalize("NFKD", string).casefold()
 
+        ast = self.parser.parse(re=re) if self.prev_re != re else self.prev_ast
+        self.prev_re = re
+        self.prev_ast = ast
+
         # variables holding the matched groups list for each matched substring in the test string
-        all_matches: List[List[Match]] = []
+        all_matches: List[Deque[Match]] = []
         highest_matched_idx: int = 0  # holds the highest matched string's index
 
-        res, consumed, matches = self.__match__(re, string, 0)
+        res, consumed, matches = self.__match__(ast, string, 0)
         if res:
             highest_matched_idx = consumed
             all_matches.append(matches)
@@ -90,7 +96,7 @@ class RegexEngine:
             return return_fnc(res, highest_matched_idx, all_matches, return_matches)
 
         while True:
-            res, consumed, matches = self.__match__(re, string, consumed)
+            res, consumed, matches = self.__match__(ast, string, consumed)
 
             # if consumed is not grater than highest_matched_idx this means the new match
             # consumed 0 characters, so there is really nothing more to match
@@ -100,11 +106,12 @@ class RegexEngine:
             else:
                 return return_fnc(True, highest_matched_idx, all_matches, return_matches)
 
-    def __match__(self, re: str, string: str, start_str_i: int) -> Tuple[bool, int, List[Match]]:
+    def __match__(self, ast: RE, string: str, start_str_i: int) -> Tuple[bool, int, Deque[Match]]:
         """ Same as match, but always returns after the first match."""
-        ast = self.parser.parse(re=re)
-        matches: Deque[Match]
-        matches = deque()
+        matches: Deque[Match] = deque()
+
+        # used to restore the left match of a ornode if necessary
+        last_match: Match = None
 
         # str_i represents the matched characters so far. It is inizialized to
         # the value of the input parameter start_str_i because the match could
@@ -113,12 +120,19 @@ class RegexEngine:
         # string.
         str_i = start_str_i
 
-        def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, List[Match]]:
+        # max_matched_idx represents the "upper limit" of the match.
+        # It is necessary when backtracking in the presence of nested
+        # quantifiers, because we need a way to "tell" the group that
+        # is causing the fail by being too greedy to stop earlier if
+        # possible.
+        max_matched_idx = -1
+
+        def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, Deque[Match]]:
             """ Returns the Tuple to be returned by __match__."""
             nonlocal matches
-            return res, str_i, list(matches)
+            return res, str_i, matches
 
-        def save_matches(match_group: Callable, ast: Union[RE, GroupNode], string: str, start_idx: int) -> Tuple[bool, int]:
+        def save_matches(match_group: Callable, ast: Union[RE, GroupNode], string: str, start_idx: int, max_matched_idx=-1) -> Tuple[bool, int]:
             """ Save the matches of capturing groups.
 
             Args:
@@ -132,44 +146,63 @@ class RegexEngine:
                 index.
             """
             nonlocal matches
+            nonlocal last_match
 
-            res, end_idx = match_group(ast, string)
+            res, end_idx = match_group(ast, string, max_matched_idx)
 
             if ast.is_capturing() and res == True:
                 for i in range(0, len(matches)):
                     if matches[i].group_id == ast.group_id:
+                        last_match = matches[i]
                         matches.remove(matches[i])
                         break
                 matches.appendleft(
                     Match(ast.group_id, start_idx, end_idx, string, ast.group_name))
 
             return res, end_idx
+        
+        def remove_leftmost_match():
+            """ Used when matching an OrNode.
+            
+            When matching an OrNode the right children is always saved instead
+            of saving the left one when the chosen path goes left. By calling
+            this function you remove the leftmost match (the one created by the
+            right child).
+            """
+            nonlocal matches
+            matches.popleft()
+        
+        def appendleft_last_match():
+            """ Used when matching an OrNode.
+            
+            When matching an OrNode the right children is always saved instead
+            of saving the left one when the chosen path goes left. By calling
+            this function you restore the left match.
+            """
+            nonlocal matches
+            matches.appendleft(last_match)
 
-        def match_group(ast: Union[RE, GroupNode, OrNode], string: str) -> Tuple[bool, int]:
-            '''
+
+        def match_group(ast: Union[RE, GroupNode, OrNode], string: str, max_matched_idx: int = -1) -> Tuple[bool, int]:
+            """
             Match a group, which is always the case.s
 
             Returns the match state (True or False) and the new string i, that is the
             number of matched characters in the string so far.
-            '''
+            """
+            nonlocal start_str_i
             nonlocal str_i
             backtrack_stack: List[Tuple[int, int, int, List[int]]] = []
 
-            def backtrack(str_i: int, curr_i: int) -> Tuple[bool, int, int]:
+            def backtrack(str_i: int, curr_child_i: int, recursive: bool = False) -> Tuple[bool, int, int]:
                 """ Returns whether it is possible to backtrack and the state to backtrack to.
 
                 Takes as input the current state of the engine and returns whether
                 or not it is possible to backtrack.
 
                 Args:
-                    backtrack_stack (List[Tuple[int, int, int, List[int]]]): the
-                    current backtrack_stack situation. The Tuple values represents,
-                    in order from left to right, the node index of the entry in its
-                    parent children list, the minimum times that node must be
-                    matched, the time it is matched in the current state, the list
-                    of consumed character each times it was matched
                     str_i (int): the current considered index of the test string
-                    curr_i (int): the index of the GroupNode children considered
+                    curr_child_i (int): the index of the GroupNode children considered
 
                 Returns:
                     A Tuple containing a bool, True if it is possible to backtrack,
@@ -179,12 +212,14 @@ class RegexEngine:
                     True).
                 """
                 nonlocal backtrack_stack
+                nonlocal max_matched_idx
+                nonlocal ast
 
                 if len(backtrack_stack) == 0:
-                    return False, str_i, curr_i
+                    return False, str_i, curr_child_i
 
                 # the fist step is to pop the last tuple from the backtrack_stack
-                node_i, min_, matched_times, consumed_list = backtrack_stack.pop()
+                popped_child_i, min_, matched_times, consumed_list = backtrack_stack.pop()
 
                 if matched_times == min_:
                     # if a node is already matched the minimum number of times, the
@@ -197,10 +232,19 @@ class RegexEngine:
                     # of each consumption in the consumed_list.
 
                     # calculate_the new str_i
+                    before_str_i = str_i
                     for consumption in consumed_list:
                         str_i -= consumption
-                    # recursive call
-                    return backtrack(str_i, node_i)
+                    if max_matched_idx == -1 or isinstance(ast.children[popped_child_i], LeafNode) or before_str_i == str_i:
+                        # recursive call
+                        return backtrack(str_i, popped_child_i, True)
+                    else:
+                        # case of backtracking from nested quantifier
+                        # returns "not recursive" because if it is the case
+                        # of a recursive call, this is outside of the case of
+                        # simply nested quantifiers, and in I cannot backtrack
+                        # anymore
+                        return not recursive, str_i, popped_child_i
                 else:
                     # the node was matched more times than its min, so you just
                     # need to remove the last consumption from the list,
@@ -209,11 +253,27 @@ class RegexEngine:
                     # the tuple with the new matched_times and consumed_list.
                     last_consumed = consumed_list.pop()
                     new_str_i = str_i - last_consumed
-                    backtrack_stack.append(
-                        (node_i, min_, matched_times - 1, consumed_list))
-                    # lastly, you return that the backtracking is possible, and
-                    # the state to which backtrack to.
-                    return True, new_str_i, curr_i
+                    if max_matched_idx == -1 or isinstance(ast.children[popped_child_i], LeafNode):
+                        backtrack_stack.append(
+                            (popped_child_i, min_, matched_times - 1, consumed_list))
+                        # lastly, you return that the backtracking is possible, and
+                        # the state to which backtrack to.
+                        return True, new_str_i, curr_child_i
+                    else:
+                        # case of backtracking from nested quantifier
+                        return not recursive, new_str_i, popped_child_i
+
+            def remove_this_node_from_stack(curr_child_i: int, str_i: int) -> int:
+                """ Removes node from stack and returns the new str_i.
+                """
+                nonlocal backtrack_stack
+                popped_child_i, min_, matched_times, consumed_list = backtrack_stack.pop()
+                if popped_child_i == curr_child_i:
+                    for consumption in consumed_list:
+                        str_i -= consumption
+                else:
+                    backtrack_stack.append((popped_child_i, min_, matched_times, consumed_list))
+                return str_i
 
             curr_node = ast.children[0] if len(ast.children) > 0 else None
             i = 0  # the children i'm iterating, not to confuse with str_i
@@ -232,20 +292,56 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         tmp_str_i = str_i
-                        res, new_str_i = match_group(ast=curr_node.left, string=string) if not isinstance(
-                            curr_node.left, GroupNode) else save_matches(match_group=match_group, ast=curr_node.left, string=string, start_idx=str_i)
-                        if res == True:
-                            pass
-                        else:
-                            str_i = tmp_str_i
-                            res, new_str_i = match_group(ast=curr_node.right, string=string) if not isinstance(
-                                curr_node.right, GroupNode) else save_matches(match_group=match_group, ast=curr_node.right, string=string, start_idx=str_i)
 
-                        if res == True:
-                            consumed_list.append(new_str_i - tmp_str_i)
-                        elif min_ <= j:
-                            break
+                        save_match_left = isinstance(curr_node.left, GroupNode)
+                        res_left, str_i_left = save_matches(match_group, curr_node.left, string, str_i, max_matched_idx) if save_match_left else match_group(curr_node.left, string, max_matched_idx)
+
+                        str_i = tmp_str_i
+
+                        save_match_right = isinstance(curr_node.right, GroupNode)
+                        res_right, str_i_right = save_matches(match_group, curr_node.right, string, str_i, max_matched_idx) if save_match_right else match_group(curr_node.right, string, max_matched_idx)
+
+                        if res_left and res_right:
+                            # choose the one that consumed the most character
+                            # unless it exceeds the max_matched_idx
+                            chose_left = (str_i_left >= str_i_right)
+                            str_i = str_i_left if chose_left else str_i_right
+                            if max_matched_idx != -1 and str_i > max_matched_idx:
+                                # tries to stay below the max_matched_idx threshold
+                                str_i = str_i_right if chose_left else str_i_left
+                            if chose_left:
+                                if save_match_right:
+                                    remove_leftmost_match()
+                                if save_match_left:
+                                    appendleft_last_match()
+                            else:
+                                # chose right
+                                if save_match_left and not save_match_right:
+                                    # there is a spurious match originated from
+                                    # the left child
+                                    remove_leftmost_match()
+
+                        elif res_left and not res_right:
+                            str_i = str_i_left
+                        elif not res_left and res_right:
+                            str_i = str_i_right
+
+                        res = (res_left or res_right)
+
+                        if res == True and (max_matched_idx == -1 or str_i <= max_matched_idx):
+                            if (str_i - tmp_str_i == 0) and j >= min_:
+                                max_matched_idx = -1
+                                break
+                            consumed_list.append(str_i - tmp_str_i)
                         else:
+                            if min_ <= j:
+                                max_matched_idx = -1
+                                break
+                            if i > 0 and not isinstance(ast.children[i-1], LeafNode):
+                                str_i = remove_this_node_from_stack(i, str_i)
+                            if str_i == start_str_i:
+                                return False, str_i
+                            max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx - 1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
@@ -258,6 +354,7 @@ class RegexEngine:
                     if not backtracking:
                         backtrack_stack.append(
                             (i, min_, j, consumed_list))
+                        max_matched_idx = -1
                         i += 1
                     continue
 
@@ -272,16 +369,25 @@ class RegexEngine:
                         tmp_str_i = str_i
 
                         res, new_str_i = save_matches(
-                            match_group, curr_node, string, str_i)
-                        if res == True:
+                            match_group, curr_node, string, str_i, max_matched_idx)
+                        if res == True and (max_matched_idx == -1 or new_str_i <= max_matched_idx):
                             # i must use tmp_str_i because str_i is changed by the match_group
                             # call, so (new_str_i - str_i) would be always 0
+                            if (new_str_i - tmp_str_i == 0) and j >= min_:
+                                max_matched_idx = -1
+                                break
                             consumed_list.append(new_str_i - tmp_str_i)
                             #str_i = new_str_i
-                        elif min_ <= j:
-                            # i did the bare minimum or more
-                            break
                         else:
+                            if min_ <= j:
+                                # i did the bare minimum or more
+                                max_matched_idx = -1
+                                break
+                            if i > 0 and not isinstance(ast.children[i-1], LeafNode):
+                                str_i = remove_this_node_from_stack(i, str_i)
+                                if str_i == start_str_i:
+                                    return False, str_i
+                                max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx - 1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
@@ -298,6 +404,7 @@ class RegexEngine:
                     if not backtracking:
                         backtrack_stack.append(
                             (i, min_, j, consumed_list))
+                        max_matched_idx = -1
                         i += 1
 
                     continue
@@ -314,13 +421,18 @@ class RegexEngine:
                     backtracking = False
                     while j < max_:
                         if str_i < len(string):  # i still have input to match
-                            if curr_node.is_match(ch=string[str_i], str_i=str_i, str_len=len(string)):
+                            if curr_node.is_match(ch=string[str_i], str_i=str_i, str_len=len(string)) and (max_matched_idx == -1 or str_i < max_matched_idx):
                                 if not (isinstance(curr_node, StartElement) or isinstance(curr_node, EndElement)):
                                     consumed_list.append(1)
                                     str_i += 1
                             else:
                                 if min_ <= j:  # I already met the minimum requirement for match
                                     break
+                                if i > 0 and not isinstance(ast.children[i-1], LeafNode):
+                                    str_i = remove_this_node_from_stack(i, str_i)
+                                    if str_i == start_str_i:
+                                        return False, str_i
+                                    max_matched_idx = str_i - 1
                                 can_bt, bt_str_i, bt_i = backtrack(
                                     before_str_i, i)
                                 if can_bt:

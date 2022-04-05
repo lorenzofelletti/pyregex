@@ -136,11 +136,11 @@ def test_unescaped_special_ch(reng: RegexEngine):
 
 
 def test_various_emails(reng: RegexEngine):
-    res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@hotmail.it')
+    res, _ = reng.match(r'.*@(gmail|hotmail)\.(com|it)', 'baa.aa@hotmail.it')
     assert res == True
-    res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@gmail.com')
+    res, _ = reng.match(r'.*@(gmail|hotmail)\.(com|it)', 'baa.aa@gmail.com')
     assert res == True
-    res, _ = reng.match('.*@(gmail|hotmail).(com|it)', 'baa.aa@hotmaila.com')
+    res, _ = reng.match(r'.*@(gmail|hotmail)\.(com|it)', 'baa.aa@hotmaila.com')
     assert res == False
 
 
@@ -232,21 +232,28 @@ def test_engine_1(reng: RegexEngine):
 
 
 def test_engine_2(reng: RegexEngine):
+    regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+
     mail = "lorenzo.felletti@mail.com"
-    res, consumed = reng.match(
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    res, consumed = reng.match(regex, mail)
     assert res == True
     assert consumed == len(mail)
 
     mail = "lorenzo.felletti@mail.c"
-    res, _ = reng.match(
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    res, _ = reng.match(regex, mail)
     assert res == False
 
     mail = "lorenzo.fellettimail.com"
-    res, _ = reng.match(
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", mail)
+    res, _ = reng.match(regex, mail)
     assert res == False
+
+    mail = "lorenz^^o.felletti@mymail.com"
+    res, _ = reng.match(regex, mail)
+    assert res == False
+
+    mail = "lorenz0.%+-@mymail.com"
+    res, _ = reng.match(regex, mail)
+    assert res == True
 
 
 def test_engine_3(reng: RegexEngine):
@@ -365,6 +372,7 @@ def test_returned_matches_indexes(reng: RegexEngine):
     assert matches[1][6].start_idx == 13 and matches[1][6].end_idx == 14
 
 
+# this one loops
 def test_returned_groups(reng: RegexEngine):
     # group e will not be matched due to the greediness of the engine,
     # .* "eats" the "e" in test_str
@@ -529,3 +537,126 @@ def test_regex_with_rigth_empty_group(reng: RegexEngine):
     assert res == True
     assert len(matches) == 1 and len(matches[0]) == 1
     assert matches[0][0].match == "a" and matches[0][0].start_idx == 0 and matches[0][0].end_idx == 1
+
+
+def test_empty_group_quantified(reng: RegexEngine):
+    regex = r'()+'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+
+def test_nested_quantifiers(reng: RegexEngine):
+    regex = r'(a*)+ab'
+    test_str = 'aab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+    regex = r'(a+)+ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == False
+
+
+def test_nested_quantifiers_with_or_node(reng: RegexEngine):
+    regex = r'(a*|b*)*ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+    regex = r'(a*|b*)+ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == True
+
+    regex = r'(a+|b+)+ab'
+    test_str = 'ab'
+    res, _ = reng.match(regex, test_str)
+    assert res == False
+
+
+def test_multiple_named_groups(reng: RegexEngine):
+    regex = r"(?<first>[a-z]+)(?<second>i)(?<third>l)"
+    test_str = "nostril"
+    res, _, _ = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+
+
+def test_one_named_group(reng: RegexEngine):
+    regex = r"[a-z]+(?<last>l)"
+    test_str = "nostril"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+
+
+def test_two_separated_named_group(reng: RegexEngine):
+    regex = r"(?<first>n)[a-z]+(?<last>l)"
+    test_str = "nostril"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nostril"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"
+
+
+def test_match_contiguous_named_groups(reng: RegexEngine):
+    regex = r"(?<first>n)(?<last>l)"
+    test_str = "nl"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nl"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"
+
+
+def test_named_group_with_range_element(reng: RegexEngine):
+    regex = r"(?<first>[a-z])(?<last>l)"
+    test_str = "nl"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nl"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"
+
+
+def test_named_group_with_range_element_and_quantifier(reng: RegexEngine):
+    regex = r"(?<first>[a-z]+)(?<last>l)"
+    test_str = "nl"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert len(matches[0]) == 3
+    assert matches[0][0].match == "nl"
+    assert matches[0][1].match == "l"
+    assert matches[0][2].match == "n"
+
+
+def test_backtracking_or_node_inside_group_node(reng: RegexEngine):
+    regex = r"(?<first>b{1,2}|[a-z]+)(?<last>l)"
+    test_str = "bnl"
+
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert matches[0][0].start_idx == 0 and matches[0][0].end_idx == len(test_str)
+    assert matches[0][1].start_idx == 2 and matches[0][1].end_idx == len(test_str)
+    assert matches[0][2].start_idx == 0 and matches[0][2].end_idx == 2
+
+    regex = r"(?<first>[a-z]+|b{1,2})(?<last>l)"
+    res, _, matches = reng.match(regex, test_str, True, True, 0)
+    assert res == True
+    assert len(matches) == 1
+    assert matches[0][0].start_idx == 0 and matches[0][0].end_idx == len(test_str)
+    assert matches[0][1].start_idx == 2 and matches[0][1].end_idx == len(test_str)
+    assert matches[0][2].start_idx == 0 and matches[0][2].end_idx == 2
+
+
+def test_double_or_nodes_with_wildcard_in_between(reng: RegexEngine):
+    res, _ = reng.match(r'@(gm|ho).(com|it)', '@hoa.com')
+    assert res == False

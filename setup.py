@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='pyregexp',
     packages=['pyregexp'],
-    version='0.2.4',
+    version='0.3.0',
     license='MIT',
     description='Simple regex library',
     long_description=long_description,
