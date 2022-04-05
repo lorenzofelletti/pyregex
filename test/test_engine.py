@@ -645,12 +645,16 @@ def test_backtracking_or_node_inside_group_node(reng: RegexEngine):
     assert res == True
     assert len(matches) == 1
     assert matches[0][0].start_idx == 0 and matches[0][0].end_idx == len(test_str)
+    assert matches[0][1].start_idx == 2 and matches[0][1].end_idx == len(test_str)
+    assert matches[0][2].start_idx == 0 and matches[0][2].end_idx == 2
 
     regex = r"(?<first>[a-z]+|b{1,2})(?<last>l)"
     res, _, matches = reng.match(regex, test_str, True, True, 0)
     assert res == True
     assert len(matches) == 1
     assert matches[0][0].start_idx == 0 and matches[0][0].end_idx == len(test_str)
+    assert matches[0][1].start_idx == 2 and matches[0][1].end_idx == len(test_str)
+    assert matches[0][2].start_idx == 0 and matches[0][2].end_idx == 2
 
 
 def test_double_or_nodes_with_wildcard_in_between(reng: RegexEngine):

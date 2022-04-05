@@ -110,6 +110,9 @@ class RegexEngine:
         """ Same as match, but always returns after the first match."""
         matches: Deque[Match] = deque()
 
+        # used to restore the left match of a ornode if necessary
+        last_match: Match = None
+
         # str_i represents the matched characters so far. It is inizialized to
         # the value of the input parameter start_str_i because the match could
         # be to be searched starting at an index different from 0, e.g. in the
@@ -143,18 +146,42 @@ class RegexEngine:
                 index.
             """
             nonlocal matches
+            nonlocal last_match
 
             res, end_idx = match_group(ast, string, max_matched_idx)
 
             if ast.is_capturing() and res == True:
                 for i in range(0, len(matches)):
                     if matches[i].group_id == ast.group_id:
+                        last_match = matches[i]
                         matches.remove(matches[i])
                         break
                 matches.appendleft(
                     Match(ast.group_id, start_idx, end_idx, string, ast.group_name))
 
             return res, end_idx
+        
+        def remove_leftmost_match():
+            """ Used when matching an OrNode.
+            
+            When matching an OrNode the right children is always saved instead
+            of saving the left one when the chosen path goes left. By calling
+            this function you remove the leftmost match (the one created by the
+            right child).
+            """
+            nonlocal matches
+            matches.popleft()
+        
+        def appendleft_last_match():
+            """ Used when matching an OrNode.
+            
+            When matching an OrNode the right children is always saved instead
+            of saving the left one when the chosen path goes left. By calling
+            this function you restore the left match.
+            """
+            nonlocal matches
+            matches.appendleft(last_match)
+
 
         def match_group(ast: Union[RE, GroupNode, OrNode], string: str, max_matched_idx: int = -1) -> Tuple[bool, int]:
             """
@@ -266,20 +293,46 @@ class RegexEngine:
                     while j < max_:
                         tmp_str_i = str_i
 
-                        res, new_str_i = match_group(curr_node.left, string, max_matched_idx) if not isinstance(
-                            curr_node.left, GroupNode) else save_matches(match_group, curr_node.left, string, str_i, max_matched_idx)
-                        if res == True and (max_matched_idx == -1 or new_str_i <= max_matched_idx):
-                            pass
-                        else:
-                            str_i = tmp_str_i
-                            res, new_str_i = match_group(curr_node.right, string, max_matched_idx) if not isinstance(
-                                curr_node.right, GroupNode) else save_matches(match_group, curr_node.right, string, str_i, max_matched_idx)
+                        save_match_left = isinstance(curr_node.left, GroupNode)
+                        res_left, str_i_left = save_matches(match_group, curr_node.left, string, str_i, max_matched_idx) if save_match_left else match_group(curr_node.left, string, max_matched_idx)
 
-                        if res == True and (max_matched_idx == -1 or new_str_i <= max_matched_idx):
-                            if (new_str_i - tmp_str_i == 0) and j >= min_:
+                        str_i = tmp_str_i
+
+                        save_match_right = isinstance(curr_node.right, GroupNode)
+                        res_right, str_i_right = save_matches(match_group, curr_node.right, string, str_i, max_matched_idx) if save_match_right else match_group(curr_node.right, string, max_matched_idx)
+
+                        if res_left and res_right:
+                            # choose the one that consumed the most character
+                            # unless it exceeds the max_matched_idx
+                            chose_left = (str_i_left >= str_i_right)
+                            str_i = str_i_left if chose_left else str_i_right
+                            if max_matched_idx != -1 and str_i > max_matched_idx:
+                                # tries to stay below the max_matched_idx threshold
+                                str_i = str_i_right if chose_left else str_i_left
+                            if chose_left:
+                                if save_match_right:
+                                    remove_leftmost_match()
+                                if save_match_left:
+                                    appendleft_last_match()
+                            else:
+                                # chose right
+                                if save_match_left and not save_match_right:
+                                    # there is a spurious match originated from
+                                    # the left child
+                                    remove_leftmost_match()
+
+                        elif res_left and not res_right:
+                            str_i = str_i_left
+                        elif not res_left and res_right:
+                            str_i = str_i_right
+
+                        res = (res_left or res_right)
+
+                        if res == True and (max_matched_idx == -1 or str_i <= max_matched_idx):
+                            if (str_i - tmp_str_i == 0) and j >= min_:
                                 max_matched_idx = -1
                                 break
-                            consumed_list.append(new_str_i - tmp_str_i)
+                            consumed_list.append(str_i - tmp_str_i)
                         else:
                             if min_ <= j:
                                 max_matched_idx = -1
@@ -288,7 +341,7 @@ class RegexEngine:
                                 str_i = remove_this_node_from_stack(i, str_i)
                             if str_i == start_str_i:
                                 return False, str_i
-                            max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx -1
+                            max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx - 1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
@@ -334,7 +387,7 @@ class RegexEngine:
                                 str_i = remove_this_node_from_stack(i, str_i)
                                 if str_i == start_str_i:
                                     return False, str_i
-                                max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx -1
+                                max_matched_idx = str_i - 1 if max_matched_idx == -1 else max_matched_idx - 1
                             can_bt, bt_str_i, bt_i = backtrack(str_i, i)
                             if can_bt:
                                 i = bt_i
