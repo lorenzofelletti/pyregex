@@ -184,7 +184,6 @@
         <article role="main">
           <h1>Source code for pyregexp.lexer</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span> <span class="nn">.tokens</span> <span class="kn">import</span> <span class="o">*</span>
 
 
@@ -200,8 +199,7 @@
     <span class="k">def</span> <span class="nf">__is_digit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__digits__</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span>
 
-<div class="viewcode-block" id="Lexer.scan"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.lexer.Lexer.scan">[docs]</a>    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Token</span><span class="p">]:</span>
+<div class="viewcode-block" id="Lexer.scan"><a class="viewcode-back" href="../../pyregexp.html#pyregexp.lexer.Lexer.scan">[docs]</a>    <span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">re</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Token</span><span class="p">]:</span>
         <span class="sd">""" Regular expressions scanner.</span>
 
 <span class="sd">        Scans the regular expression in input and produces the list of recognized Tokens in output.</span>
