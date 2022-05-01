@@ -278,6 +278,21 @@ class RegexEngine:
             curr_node = ast.children[0] if len(ast.children) > 0 else None
             i = 0  # the children i'm iterating, not to confuse with str_i
 
+            if isinstance(ast, OrNode):
+                # matcha il primo, se matcha return true
+                # se no matcha il secondo
+                # se matcha return true, altrimenti false
+                tmp_str_i = str_i
+                res, new_str_i = save_matches(
+                            match_group, curr_node, string, str_i, max_matched_idx) if not isinstance(curr_node, OrNode) else match_group(curr_node, string, max_matched_idx)
+                if not res:
+                    str_i = tmp_str_i
+                    curr_node = ast.right
+                    res, new_str_i = save_matches(
+                            match_group, curr_node, string, str_i, max_matched_idx) if not isinstance(curr_node, OrNode) else match_group(curr_node, string, max_matched_idx)
+                str_i = new_str_i
+                return res, str_i
+
             # the passed ast can't be a Leaf
             while i < len(ast.children):
                 curr_node = ast.children[i]
