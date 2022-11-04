@@ -4,6 +4,9 @@ import math
 from .lexer import Lexer
 from .tokens import *
 from .re_ast import *
+from .exceptions import BadCurlyQuantifierException, MissingClosingBracketException, \
+    ReversedRangeException, UnterminatedGroupException, UnterminatedNamedGroupNameException, \
+    ParsingException
 
 
 class Pyrser:
@@ -143,7 +146,8 @@ class Pyrser:
                         next_tkn()  # skip the closing brace
                         return
                     else:
-                        raise Exception("Invalid curly brace syntax.")
+                        raise BadCurlyQuantifierException(
+                            "Invalid curly brace syntax.")
 
                 next_tkn()
                 while isinstance(curr_tkn, ElementToken):
@@ -159,8 +163,9 @@ class Pyrser:
                 new_el.min = val_1 if type(val_1) is int else 0
                 new_el.max = val_2 if type(val_2) is int else math.inf
 
-            except Exception as e:
-                raise Exception("Invalid curly brace syntax.")
+            except Exception as _:
+                raise BadCurlyQuantifierException(
+                    "Invalid curly brace syntax.")
 
         def parse_range_el() -> ASTNode:
             if isinstance(curr_tkn, LeftBracket):
@@ -169,8 +174,7 @@ class Pyrser:
                 if isinstance(curr_tkn, RightBracket):
                     return element
                 else:
-                    raise Exception(
-                        "Missing closing ']'.")
+                    raise MissingClosingBracketException()
             else:
                 return parse_el()
 
@@ -179,8 +183,7 @@ class Pyrser:
             nonlocal curr_tkn
             match_str = ''
             if curr_tkn is None:
-                raise Exception(
-                    "Missing closing ']'.")
+                raise MissingClosingBracketException()
 
             positive_logic = True
             if isinstance(curr_tkn, NotToken):
@@ -202,7 +205,7 @@ class Pyrser:
                     curr_tkn = ElementToken(char=curr_tkn.char)
 
                 if next_tkn(without_consuming=True) is None:
-                    raise Exception("Missing closing ']'.")
+                    raise MissingClosingBracketException()
                 elif isinstance(next_tkn(without_consuming=True), Dash):
                     # it may be a range (like a-z, A-M, 0-9, ...)
                     prev_char = curr_tkn.char
@@ -215,10 +218,10 @@ class Pyrser:
                         # we're in the case of an actual range (or next_tkn is none)
                         next_tkn()  # curr_tkn is now the one after the dash
                         if next_tkn is None:
-                            raise Exception("Missing closing ']'.")
+                            raise MissingClosingBracketException()
                         elif ord(prev_char) > ord(curr_tkn.char):
-                            raise Exception(
-                                f"Range values reversed. Start '{prev_char}' char code is greater than end '{curr_tkn.char}' char code.")
+                            raise ReversedRangeException(
+                                prev_char, curr_tkn.char)
                         else:
                             match_str += get_range_str(prev_char,
                                                        curr_tkn.char)
@@ -252,31 +255,31 @@ class Pyrser:
                         group_name = parse_group_name()
                     else:
                         if curr_tkn is None:
-                            raise Exception("Unterminated group.")
+                            raise UnterminatedGroupException()
                         else:
-                            raise Exception(
+                            raise ParsingException(
                                 f"Invalid group: '{{?{curr_tkn.char}'.")
                 res = parse_re_seq(capturing=capturing, group_name=group_name)
                 if isinstance(curr_tkn, RightParenthesis):
                     # next_tkn() not needed (parse_group's while loop will eat the parenthesis)
                     return res
                 else:
-                    raise Exception("Missing closing group parenthesis ')'.")
+                    raise ParsingException("Missing closing group parenthesis ')'.")
             else:
-                raise Exception(
+                raise ParsingException(
                     "Unescaped special character {}.".format(curr_tkn.char))
 
         def parse_group_name() -> str:
             if curr_tkn is None:
-                raise Exception("Unterminated named group name.")
+                raise UnterminatedNamedGroupNameException()
             group_name = ''
             while curr_tkn.char != '>':
                 group_name += curr_tkn.char
                 next_tkn()
                 if curr_tkn is None:
-                    raise Exception("Unterminated named group name.")
+                    raise UnterminatedNamedGroupNameException()
             if len(group_name) == 0:
-                raise Exception("Unexpected empty named group name.")
+                raise ParsingException("Unexpected empty named group name.")
             next_tkn()  # consumes '>'
             return group_name
 
@@ -288,6 +291,6 @@ class Pyrser:
 
         ast = parse_re()
         if curr_tkn is not None:
-            raise Exception(
+            raise ParsingException(
                 "Unable to parse the regex.")
         return ast

@@ -7,9 +7,7 @@ class ASTNode:
 
     Abstract Syntax Tree classes hierarchy base class.
     """
-
-    def __init__(self) -> None:
-        pass
+    pass
 
 
 class RE(ASTNode):
@@ -23,8 +21,8 @@ class RE(ASTNode):
         self.__capturing__: bool = capturing
         self.group_name: str = group_name
         self.group_id: int = -1
-        self.child: Union[GroupNode, OrNode] = child
-        self.children: List[Union[GroupNode, OrNode]] = deque([child])
+        self.child: ASTNode = child
+        self.children: Deque[ASTNode] = deque([child])
 
     def is_capturing(self) -> bool:
         return self.__capturing__
@@ -39,7 +37,7 @@ class LeafNode(ASTNode):
     def __init__(self) -> None:
         super().__init__()
 
-    def is_match(self, ch: str = None, str_i: int = None, str_len: int = None) -> bool:
+    def is_match(self, _: str = None, __: int = None, ___: int = None) -> bool:
         """
         Returns whether the passed inputs matches with the node.
 
