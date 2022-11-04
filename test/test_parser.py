@@ -93,7 +93,7 @@ def test_range_2(parser: Pyrser):
     assert type(ast.child.children[0]) is RangeElement
     assert ast.child.children[0].is_match('a') == False
     assert ast.child.children[0].is_match('-') == False
-    ast.child.children[0].is_match(' ') == False
+    assert ast.child.children[0].is_match(' ') == False
 
 
 def test_range_3(parser: Pyrser):
@@ -102,7 +102,7 @@ def test_range_3(parser: Pyrser):
     assert type(ast.child.children[0]) is RangeElement
     assert ast.child.children[0].is_match('a') == True
     assert ast.child.children[0].is_match('-') == True
-    ast.child.children[0].is_match(' ') == True
+    assert ast.child.children[0].is_match(' ') == True
 
 
 def test_range_2(parser: Pyrser):
@@ -118,7 +118,7 @@ def test_parse_curly_1(parser: Pyrser):
     assert type(ast.child.children[0]) is Element
     assert ast.child.children[0].is_match('a') == True
     assert ast.child.children[0].min == 2
-    ast.child.children[0].max == 2
+    assert ast.child.children[0].max == 2
 
 
 def test_parse_curly_2(parser: Pyrser):
@@ -127,7 +127,7 @@ def test_parse_curly_2(parser: Pyrser):
     assert type(ast.child.children[0]) is Element
     assert ast.child.children[0].is_match('a') == True
     assert ast.child.children[0].min == 0
-    ast.child.children[0].max == 2
+    assert ast.child.children[0].max == 2
 
 
 def test_parse_curly_3(parser: Pyrser):
@@ -136,7 +136,7 @@ def test_parse_curly_3(parser: Pyrser):
     assert type(ast.child.children[0]) is Element
     assert ast.child.children[0].is_match('a') == True
     assert ast.child.children[0].min == 2
-    ast.child.children[0].max == math.inf
+    assert ast.child.children[0].max == math.inf
 
 
 def test_parse_curly_4(parser: Pyrser):
@@ -145,7 +145,7 @@ def test_parse_curly_4(parser: Pyrser):
     assert type(ast.child.children[0]) is Element
     assert ast.child.children[0].is_match('a') == True
     assert ast.child.children[0].min == 0
-    ast.child.children[0].max == math.inf
+    assert ast.child.children[0].max == math.inf
 
 
 def test_parse_fail_empty_curly(parser: Pyrser):

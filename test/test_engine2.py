@@ -14,7 +14,7 @@ def test_1(reng: RegexEngine):
     res, consumed, matches = reng.match(regex, test_str, True, True)
 
     assert res == True
-    consumed == len(test_str)
+    assert consumed == len(test_str)
     assert len(matches) == 1
 
 
@@ -25,5 +25,5 @@ def test_2(reng: RegexEngine):
     res, consumed, matches = reng.match(regex, test_str, True, True)
 
     assert res == True
-    consumed == len(test_str)
+    assert consumed == len(test_str)
     assert len(matches) == 4

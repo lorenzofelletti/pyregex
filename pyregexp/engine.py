@@ -26,7 +26,7 @@ class RegexEngine:
 
     def __init__(self):
         self.parser: Pyrser = Pyrser()
-        self.prev_re: str = None
+        self.prev_re: Union[str, None] = None
         self.prev_ast: RE = None
 
     def match(self, re: str, string: str, return_matches: bool = False, continue_after_match: bool = False, ignore_case: int = 0) -> Union[Tuple[bool, int, List[Deque[Match]]], Tuple[bool, int]]:
@@ -92,7 +92,7 @@ class RegexEngine:
         else:
             return return_fnc(res, highest_matched_idx, all_matches, return_matches)
 
-        if not continue_after_match or not consumed > 0:
+        if not continue_after_match or consumed == 0:
             return return_fnc(res, highest_matched_idx, all_matches, return_matches)
 
         while True:
@@ -125,7 +125,6 @@ class RegexEngine:
         # quantifiers, because we need a way to "tell" the group that
         # is causing the fail by being too greedy to stop earlier if
         # possible.
-        max_matched_idx = -1
 
         def return_fnc(res: bool, str_i: int) -> Tuple[bool, int, Deque[Match]]:
             """ Returns the Tuple to be returned by __match__."""
@@ -299,7 +298,6 @@ class RegexEngine:
 
                 # if is OrNode I evaluate the sub-groups with a recursive call
                 if isinstance(curr_node, OrNode):
-                    before_str_i = str_i
                     min_, max_ = curr_node.min, curr_node.max
                     j = 0
                     consumed_list = []
@@ -371,13 +369,11 @@ class RegexEngine:
                             (i, min_, j, consumed_list))
                         max_matched_idx = -1
                         i += 1
-                    continue
 
                 elif isinstance(curr_node, GroupNode):
                     min_, max_ = curr_node.min, curr_node.max
                     j = 0
                     consumed_list = []
-                    before_str_i = str_i
 
                     backtracking = False
                     while j < max_:
@@ -392,7 +388,6 @@ class RegexEngine:
                                 max_matched_idx = -1
                                 break
                             consumed_list.append(new_str_i - tmp_str_i)
-                            #str_i = new_str_i
                         else:
                             if min_ <= j:
                                 # i did the bare minimum or more
@@ -421,8 +416,6 @@ class RegexEngine:
                             (i, min_, j, consumed_list))
                         max_matched_idx = -1
                         i += 1
-
-                    continue
 
                 elif isinstance(curr_node, LeafNode):
                     # it is a LeafNode obviously now
@@ -479,7 +472,6 @@ class RegexEngine:
                         backtrack_stack.append(
                             (i, min_, j, consumed_list))
                         i += 1
-                    continue
                 else:
                     return False, str_i
 

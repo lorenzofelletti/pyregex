@@ -1,7 +1,7 @@
 from ..pyregexp.tokens import Asterisk, Bracket, Circumflex, Comma, CurlyBrace, Dash, ElementToken, End, EndToken, Escape, LeftBracket, LeftCurlyBrace, LeftParenthesis, NotToken, OneOrMore, OrToken, Parenthesis, Plus, Quantifier, QuestionMark, RightBracket, RightCurlyBrace, RightParenthesis, SpaceToken, Start, StartToken, Token, VerticalBar, Wildcard, WildcardToken, ZeroOrMore, ZeroOrOne
 
 
-def test_Asterisk():
+def test_asterisk():
     assert issubclass(Asterisk, ZeroOrMore)
 
     a = Asterisk()
@@ -10,7 +10,7 @@ def test_Asterisk():
     assert type(a) == Asterisk
 
 
-def test_NotToken():
+def test_not_token():
     assert issubclass(NotToken, Token) == True
 
     nt = NotToken(char='^')
@@ -18,7 +18,7 @@ def test_NotToken():
     assert nt.char == '^'
 
 
-def test_Bracket():
+def test_bracket():
     br = Bracket()
     assert br is not None
     br = LeftBracket()
@@ -27,6 +27,6 @@ def test_Bracket():
     assert br is not None
 
 
-def test_Escape():
+def test_escape():
     escape = Escape()
     assert escape is not None

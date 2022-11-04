@@ -7,7 +7,6 @@ class Token:
 
     def __init__(self) -> None:
         self.char: str = ''
-    pass
 
 
 class ElementToken(Token):

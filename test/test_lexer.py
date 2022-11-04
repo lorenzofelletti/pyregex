@@ -1,5 +1,5 @@
 import pytest
-from ..pyregexp.tokens import *
+from ..pyregexp.tokens import Comma, Dash, ElementToken, End, SpaceToken, Start
 from ..pyregexp.lexer import Lexer
 
 
